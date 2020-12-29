@@ -1,1 +1,0 @@
-/usr/bin/cc -g   CMakeFiles/crawon.dir/rawon.c.o  -o crawon 
