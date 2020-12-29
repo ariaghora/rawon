@@ -1,0 +1,3 @@
+/home/ghora/CLionProjects/crawon/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/ghora/CLionProjects/crawon/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/ghora/CLionProjects/crawon/cmake-build-debug/CMakeFiles/crawon.dir
