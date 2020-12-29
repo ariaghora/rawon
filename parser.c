@@ -18,14 +18,11 @@ void parser_init(Parser *parser, Lexer *lexer) {
 
 void expect(tok_kind_t exp_kind, Token found, char *exp_txt) {
     if (exp_kind != found.kind) {
-        printf("Error: expected \"%s\", but \"%s\" found.", exp_txt, found.txt);
+        printf("Error: expected \"%s\", but \"%s\" found.\n", exp_txt, found.txt);
         exit(1);
     }
 }
 
-/*
- * Initializer
- */
 AST *create_number_node(Token tok) {
     AST *res = calloc(1, sizeof(AST));
     if (tok.kind == TK_INT) {
@@ -41,12 +38,53 @@ AST *create_number_node(Token tok) {
 }
 
 AST *create_bin_op(AST *left, AST *right, Token op) {
-    AST *binop = malloc(sizeof(AST));
+    AST *binop = calloc(1, sizeof(AST));
     binop->node_type = NT_BIN_OP;
     binop->left = left;
     binop->op = op;
     binop->right = right;
     return binop;
+}
+
+AST *create_list_node(AST **node_list, int node_list_cnt) {
+    AST *list_node = calloc(1, sizeof(AST));
+    list_node->node_type = NT_LIST;
+    list_node->node_list = node_list;
+    list_node->node_list_cnt = node_list_cnt;
+    return list_node;
+}
+
+AST *parse_block(Parser *parser) {
+
+}
+
+AST *parse_statements(Parser *parser) {
+
+}
+
+AST *parse_list(Parser *parser) {
+    /*
+     * Should be implemented as a dynamic linked list
+     */
+    AST **node_list = calloc(100, sizeof(AST *));
+    parser_advance(parser);
+    int i = 0;
+
+    if (parser->current.kind == TK_RBRACKET) {
+        /* Empty list */
+        parser_advance(parser);
+    } else {
+        node_list[i++] = parse_expr(parser);
+        while (parser->current.kind == TK_COMMA) {
+            parser_advance(parser);
+            node_list[i++] = parse_expr(parser);
+        }
+
+        expect(TK_RBRACKET, parser->current, "]");
+    }
+
+    parser_advance(parser);
+    return create_list_node(node_list, i);
 }
 
 AST *parse_comp_expr(Parser *parser) {
@@ -88,6 +126,8 @@ AST *parse_atom(Parser *parser) {
         parser_advance(parser);
 
         return expr;
+    } else if (tok.kind == TK_LBRACKET) {
+        return parse_list(parser);
     }
 
     return NULL;

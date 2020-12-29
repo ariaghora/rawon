@@ -1,1 +1,1 @@
-gcc -Wall ./*.c -o ./rawon.exe -O0
+gcc -Wall ./*.c -o "./rawon.exe"

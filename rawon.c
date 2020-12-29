@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     interpreter_init(interpreter);
 
     RwnObj *result = visit(interpreter, root);
-    printf("%s\n", result->repr);
+    printf("Output: %s\n", result->repr);
 
     interpreter_cleanup(interpreter);
     //--- Interpreter end

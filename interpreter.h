@@ -6,6 +6,7 @@
 typedef struct tRwnObj {
     int intval;
     float floatval;
+    struct tRwnObj **obj_list;
     char repr[255];
 } RwnObj;
 

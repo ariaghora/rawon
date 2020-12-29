@@ -11,8 +11,11 @@ typedef enum {
     /* Arithmetic tokens */
     TK_PLUS, TK_MINUS, TK_MULT, TK_DIV,
 
+    /* Delimiters */
+    TK_LPAREN, TK_RPAREN, TK_LBRACE, TK_RBRACE, TK_LBRACKET, TK_RBRACKET,
+
     /* Other tokens */
-    TK_LPAREN, TK_RPAREN, TK_EOF,
+     TK_COMMA, TK_EOF,
 } tok_kind_t;
 
 typedef struct {

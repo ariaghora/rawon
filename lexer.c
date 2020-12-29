@@ -82,6 +82,12 @@ void lexer_lex(Lexer *lexer) {
             lexer_add_token(lexer, create_token(TK_LPAREN, "("));
         else if (lexer->c == ')')
             lexer_add_token(lexer, create_token(TK_RPAREN, ")"));
+        else if (lexer->c == '[')
+            lexer_add_token(lexer, create_token(TK_LBRACKET, "["));
+        else if (lexer->c == ']')
+            lexer_add_token(lexer, create_token(TK_RBRACKET, "]"));
+        else if (lexer->c == ',')
+            lexer_add_token(lexer, create_token(TK_COMMA, ","));
         else {
             printf("Bad character: %c\n", lexer->c);
             exit(1);

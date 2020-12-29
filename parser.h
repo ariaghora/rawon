@@ -1,8 +1,9 @@
 #ifndef CRAWON_PARSER_H
 #define CRAWON_PARSER_H
 
+
 typedef enum {
-    NT_INT, NT_FLOAT, NT_STRING, NT_BIN_OP, NT_UN_OP, NT_FUNC_DEF, NT_FUNC_CALL
+    NT_INT, NT_FLOAT, NT_STRING, NT_LIST, NT_BIN_OP, NT_UN_OP, NT_FUNC_DEF, NT_FUNC_CALL
 } node_type_t;
 
 typedef struct tAST {
@@ -11,14 +12,20 @@ typedef struct tAST {
     float floatval;
     char *strval;
 
-    /**
+    /*
      * For unary operation node, `left` is used as the operand
      */
     struct tAST *left;
     struct tAST *right;
     Token op;
 
-    /**
+    /*
+     * A list node contains a node list
+     */
+    struct tAST **node_list;
+    int node_list_cnt;
+
+    /*
      * The string representation of each node
      */
     char repr[255];
@@ -34,6 +41,23 @@ typedef struct {
 void parser_advance(Parser *parser);
 
 void parser_init(Parser *parser, Lexer *lexer);
+
+/*
+ * Initializer functions
+ */
+AST *create_number_node(Token tok);
+
+AST *create_bin_op(AST *left, AST *right, Token op);
+
+AST *create_list_node(AST **node_list, int node_list_cnt);
+
+/*
+ * Parsing functions
+ */
+
+AST *parse_list(Parser *parser);
+
+AST *parse_statement(Parser *parser);
 
 AST *parse_expr(Parser *parser);
 
