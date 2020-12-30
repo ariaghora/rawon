@@ -25,11 +25,14 @@ int main(int argc, char *argv[]) {
     interpreter_init(interpreter);
 
     RwnObj *result = visit(interpreter, root);
-    printf("Output: %s\n", result->repr);
+    char *result_repr = obj_get_repr(result);
+
+    printf("Output: %s\n", result_repr);
 
     interpreter_cleanup(interpreter);
     //--- Interpreter end
 
+    free(result_repr);
     free_AST(root);
     free(parser);
     free(lexer);

@@ -28,12 +28,24 @@ AST *create_number_node(Token tok) {
     if (tok.kind == TK_INT) {
         res->node_type = NT_INT;
         res->intval = atoi(tok.txt);
-        sprintf(res->repr, "%d", res->intval);
+//        res->strval = calloc(2, sizeof(char));
+//        strcpy(res->strval, "1");
+//        sprintf(res->strval, "%d", res->intval);
+
     } else {
         res->node_type = NT_FLOAT;
         res->floatval = atof(tok.txt);
-        sprintf(res->repr, "%f", res->floatval);
     }
+    return res;
+}
+
+AST *create_string_node(Token tok) {
+    AST *res = calloc(1, sizeof(AST));
+    res->node_type = NT_STRING;
+    res->strvallen = tok.txtlen;
+    res->strval = calloc(res->strvallen + 1, sizeof(char));
+    strcpy(res->strval, tok.txt);
+
     return res;
 }
 
@@ -115,9 +127,20 @@ AST *parse_expr(Parser *parser) {
 
 AST *parse_atom(Parser *parser) {
     Token tok = parser->current;
+    /*
+     * Parse numeric literal
+     */
     if (tok.kind == TK_INT || tok.kind == TK_FLOAT) {
         parser_advance(parser);
         return create_number_node(tok);
+    }
+
+        /*
+         * Parse string literal
+         */
+    else if (tok.kind == TK_STR) {
+        parser_advance(parser);
+        return create_string_node(tok);
     } else if (tok.kind == TK_LPAREN) {
         parser_advance(parser);
         AST *expr = parse_expr(parser);

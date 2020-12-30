@@ -5,8 +5,8 @@
 #define MAX_TOKEN_LEN 100 * 100
 
 typedef enum {
-    /* Numeric tokens */
-    TK_INT, TK_FLOAT,
+    /* Literal tokens */
+    TK_INT, TK_FLOAT, TK_STR,
 
     /* Arithmetic tokens */
     TK_PLUS, TK_MINUS, TK_MULT, TK_DIV,
@@ -20,7 +20,8 @@ typedef enum {
 
 typedef struct {
     tok_kind_t kind;
-    char txt[50];
+    char txt[255];
+    int txtlen;
 } Token;
 
 typedef struct {
@@ -34,6 +35,8 @@ typedef struct {
 Token create_token(tok_kind_t kind, char *txt);
 
 Token make_number(Lexer *lexer);
+
+Token make_string(Lexer *lexer, char delim);
 
 void lexer_init(Lexer *lexer, char *fn);
 

@@ -10,7 +10,9 @@ typedef struct tAST {
     node_type_t node_type;
     int intval;
     float floatval;
+
     char *strval;
+    int strvallen;
 
     /*
      * For unary operation node, `left` is used as the operand
@@ -25,10 +27,11 @@ typedef struct tAST {
     struct tAST **node_list;
     int node_list_cnt;
 
-    /*
-     * The string representation of each node
-     */
-    char repr[255];
+//    /*
+//     * The string representation of each node
+//     */
+//    char repr[255];
+
 } AST;
 
 typedef struct {
@@ -46,6 +49,8 @@ void parser_init(Parser *parser, Lexer *lexer);
  * Initializer functions
  */
 AST *create_number_node(Token tok);
+
+AST *create_string_node(Token tok);
 
 AST *create_bin_op(AST *left, AST *right, Token op);
 

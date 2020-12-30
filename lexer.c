@@ -35,6 +35,23 @@ Token make_number(Lexer *lexer) {
     else return create_token(TK_INT, s);
 }
 
+Token make_string(Lexer *lexer, char delim) {
+    lexer_advance(lexer);
+    char s[255] = "";
+
+    int i = 0;
+    while (lexer->c != delim) {
+        s[i++] = lexer->c;
+        lexer_advance(lexer);
+    }
+    s[i] = '\0';
+
+    Token tok = create_token(TK_STR, s);
+    tok.txtlen = i;
+
+    return tok;
+}
+
 void lexer_init(Lexer *lexer, char *fn) {
     lexer->idx = 0;
     lexer->tkcnt = 0;
@@ -70,6 +87,8 @@ void lexer_lex(Lexer *lexer) {
 
         if ((lexer->c >= '0') && (lexer->c <= '9'))
             lexer_add_token(lexer, make_number(lexer));
+        else if (lexer->c == '\'' || lexer->c == '"')
+            lexer_add_token(lexer, make_string(lexer, lexer->c));
         else if (lexer->c == '+')
             lexer_add_token(lexer, create_token(TK_PLUS, "+"));
         else if (lexer->c == '-')
