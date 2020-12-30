@@ -26,13 +26,13 @@ typedef struct tAST {
      */
     struct tAST **node_list;
     int node_list_cnt;
-
-//    /*
-//     * The string representation of each node
-//     */
-//    char repr[255];
-
 } AST;
+
+typedef struct {
+    int max_cap;
+    int count;
+    AST **arr;
+} NodeList;
 
 typedef struct {
     int idx;
@@ -40,8 +40,15 @@ typedef struct {
     Token *tokens;
 } Parser;
 
+void node_list_init(NodeList *node_list);
+
+void node_list_push(NodeList *node_list, AST *item);
+
+void node_list_free(NodeList *node_list);
 
 void parser_advance(Parser *parser);
+
+void parser_skip_newline(Parser *parser);
 
 void parser_init(Parser *parser, Lexer *lexer);
 
@@ -60,23 +67,29 @@ AST *create_list_node(AST **node_list, int node_list_cnt);
  * Parsing functions
  */
 
-AST *parse_list(Parser *parser);
-
-AST *parse_statement(Parser *parser);
-
-AST *parse_expr(Parser *parser);
-
-AST *parse_atom(Parser *parser);
+AST *parser_parse(Parser *parser);
 
 AST *parse_arith(Parser *parser);
 
-AST *parse_term(Parser *parser);
+AST *parse_atom(Parser *parser);
+
+AST *parse_block(Parser *parser);
+
+AST *parse_call(Parser *parser);
+
+AST *parse_comp_expr(Parser *parser);
+
+AST *parse_expr(Parser *parser);
 
 AST *parse_factor(Parser *parser);
 
+AST *parse_list(Parser *parser);
+
 AST *parse_power(Parser *parser);
 
-AST *parse_call(Parser *parser);
+AST *parse_statement(Parser *parser);
+
+AST *parse_term(Parser *parser);
 
 
 #endif //CRAWON_PARSER_H

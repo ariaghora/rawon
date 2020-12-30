@@ -4,14 +4,19 @@
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
+#include "ops.h"
 
-RwnObj *create_int_obj(Interpreter *interpreter, int val) {
+RwnObj *create_number_obj(Interpreter *interpreter,
+                          float val,
+                          data_type_t data_type) {
     RwnObj *res = calloc(1, sizeof(RwnObj));
-    res->intval = val;
-    res->data_type = DT_INT;
+    if (data_type == DT_INT)
+        res->intval = val;
+    else
+        res->floatval = val;
+    res->data_type = data_type;
 
     tracker_add_obj(interpreter, res);
-
     return res;
 }
 
@@ -25,19 +30,33 @@ RwnObj *create_str_obj(Interpreter *interpreter, AST *node) {
     return res;
 }
 
+RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node) {
+    return visit(interpreter, node);
+}
+
 RwnObj *visit(Interpreter *interpreter, AST *node) {
-    if (node->node_type == NT_INT) return visit_int(interpreter, node);
-    else if (node->node_type == NT_BIN_OP) return visit_binop(interpreter, node);
-    else if (node->node_type == NT_STRING) return visit_str(interpreter, node);
-    else if (node->node_type == NT_LIST) return visit_list(interpreter, node);
+    if (node->node_type == NT_INT)
+        return visit_int(interpreter, node);
+    else if (node->node_type == NT_FLOAT)
+        return visit_float(interpreter, node);
+    else if (node->node_type == NT_BIN_OP)
+        return visit_binop(interpreter, node);
+    else if (node->node_type == NT_STRING)
+        return visit_str(interpreter, node);
+    else if (node->node_type == NT_LIST)
+        return visit_list(interpreter, node);
     else {
-        printf("Interpreter error.");
+        printf("Interpreter error.\n");
         exit(1);
     }
 }
 
+RwnObj *visit_float(Interpreter *interpreter, AST *node) {
+    return create_number_obj(interpreter, node->floatval, TK_FLOAT);
+}
+
 RwnObj *visit_int(Interpreter *interpreter, AST *node) {
-    return create_int_obj(interpreter, node->intval);
+    return create_number_obj(interpreter, node->intval, TK_INT);
 }
 
 RwnObj *visit_str(Interpreter *interpreter, AST *node) {
@@ -51,9 +70,9 @@ RwnObj *visit_binop(Interpreter *interpreter, AST *node) {
 
     RwnObj *res;
     if (op.kind == TK_PLUS) {
-        res = create_int_obj(interpreter, left->intval + right->intval);
+        res = number_add(interpreter, left, right);
     } else if (op.kind == TK_MULT) {
-        res = create_int_obj(interpreter, left->intval * right->intval);
+        res = number_mul(interpreter, left, right);
     }
 
     return res;
@@ -90,7 +109,7 @@ char *obj_get_repr(RwnObj *obj) {
         res = calloc(len + 1, sizeof(char));
         strcpy(res, s);
     } else if (obj->data_type == DT_FLOAT) {
-        len = sprintf(s, "%f", obj->floatval);
+        len = sprintf(s, "%.2f", obj->floatval);
         res = calloc(len + 1, sizeof(char));
         strcpy(res, s);
     } else if (obj->data_type == DT_STR) {
@@ -139,14 +158,6 @@ void tracker_remove_obj(Interpreter *interpreter, RwnObj *obj) {
     }
 }
 
-void free_rwn_obj(RwnObj *obj) {
-    if (obj->obj_list_cnt > 0) {
-        for (int i = 0; i < obj->obj_list_cnt; ++i) {
-            free(obj->obj_list[i]);
-        }
-    }
-}
-
 void interpreter_cleanup(Interpreter *interpreter) {
     for (int i = 0; i < interpreter->obj_cnt; i++) {
         /*
@@ -175,6 +186,10 @@ void free_AST(AST *node) {
      * String AST node cleanup
      */
     free(node->strval);
+
+    /*
+     * Function node cleanup
+     */
 
     /*
      * Cleaning items if it is a list AST node

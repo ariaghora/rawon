@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
 #include "lexer.h"
 
 Token create_token(tok_kind_t kind, char *txt) {
@@ -82,13 +81,22 @@ void lexer_add_token(Lexer *lexer, Token token) {
 
 void lexer_lex(Lexer *lexer) {
     while (lexer->c != '\0') {
-        while (lexer->c == ' ')
-            lexer_advance(lexer); // skip whitespace
+        /* Skip whitespace. */
+        while (lexer->c == ' ' || lexer->c == '\t')
+            lexer_advance(lexer);
 
+        /* Lex numeric token. */
         if ((lexer->c >= '0') && (lexer->c <= '9'))
             lexer_add_token(lexer, make_number(lexer));
+
+        /* Lex string token. */
         else if (lexer->c == '\'' || lexer->c == '"')
             lexer_add_token(lexer, make_string(lexer, lexer->c));
+
+        /* Lex newline token. Semicolon and newline characters a allowed. */
+        else if (lexer->c == ';' || lexer->c == '\n')
+            lexer_add_token(lexer, create_token(TK_EOL, "EOL"));
+
         else if (lexer->c == '+')
             lexer_add_token(lexer, create_token(TK_PLUS, "+"));
         else if (lexer->c == '-')

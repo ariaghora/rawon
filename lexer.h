@@ -15,7 +15,7 @@ typedef enum {
     TK_LPAREN, TK_RPAREN, TK_LBRACE, TK_RBRACE, TK_LBRACKET, TK_RBRACKET,
 
     /* Other tokens */
-     TK_COMMA, TK_EOF,
+     TK_COMMA, TK_EOL, TK_EOF,
 } tok_kind_t;
 
 typedef struct {

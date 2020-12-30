@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
@@ -18,16 +17,16 @@ int main(int argc, char *argv[]) {
     Parser *parser = calloc(1, sizeof(Parser));
     parser_init(parser, lexer);
 
-    AST *root = parse_arith(parser);
+    AST *root = parser_parse(parser);
 
     //--- Interpreter start
     Interpreter *interpreter = calloc(1, sizeof(Interpreter));
     interpreter_init(interpreter);
 
-    RwnObj *result = visit(interpreter, root);
+    RwnObj *result = interpreter_traverse(interpreter, root);
     char *result_repr = obj_get_repr(result);
 
-    printf("Output: %s\n", result_repr);
+    printf("Output \u2192 %s\n", result_repr);
 
     interpreter_cleanup(interpreter);
     //--- Interpreter end

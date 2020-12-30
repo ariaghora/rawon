@@ -29,12 +29,17 @@ typedef struct {
     int obj_cnt;
 } Interpreter;
 
-
-RwnObj *create_int_obj(Interpreter *interpreter, int val);
+RwnObj *create_number_obj(Interpreter *interpreter,
+                          float val,
+                          data_type_t data_type);
 
 RwnObj *create_str_obj(Interpreter *interpreter, AST *node);
 
+RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node);
+
 RwnObj *visit(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_float(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_int(Interpreter *interpreter, AST *node);
 
