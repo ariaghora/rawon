@@ -82,7 +82,7 @@ void lexer_add_token(Lexer *lexer, Token token) {
 void lexer_lex(Lexer *lexer) {
     while (lexer->c != '\0') {
         /* Skip whitespace. */
-        while (lexer->c == ' ' || lexer->c == '\t')
+        while (lexer->c == ' ' || lexer->c == '\t' || lexer->c == '\r')
             lexer_advance(lexer);
 
         /* Lex numeric token. */
