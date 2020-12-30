@@ -28,10 +28,6 @@ AST *create_number_node(Token tok) {
     if (tok.kind == TK_INT) {
         res->node_type = NT_INT;
         res->intval = atoi(tok.txt);
-//        res->strval = calloc(2, sizeof(char));
-//        strcpy(res->strval, "1");
-//        sprintf(res->strval, "%d", res->intval);
-
     } else {
         res->node_type = NT_FLOAT;
         res->floatval = atof(tok.txt);

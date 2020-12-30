@@ -25,48 +25,6 @@ RwnObj *create_str_obj(Interpreter *interpreter, AST *node) {
     return res;
 }
 
-char *obj_get_repr(RwnObj *obj) {
-    char s[255] = "";
-    char *res;
-    int len;
-
-    if ((obj->data_type) == DT_INT) {
-        len = sprintf(s, "%d", obj->intval);
-        res = calloc(len + 1, sizeof(char));
-        strcpy(res, s);
-    } else if (obj->data_type == DT_FLOAT) {
-        len = sprintf(s, "%f", obj->floatval);
-        res = calloc(len + 1, sizeof(char));
-        strcpy(res, s);
-    } else if (obj->data_type == DT_STR) {
-        len = obj->strvallen + 2;
-        res = calloc(len + 1, sizeof(char));
-        strcpy(res, "'");
-        strcat(res, obj->strval);
-        strcat(res, "'");
-    } else if (obj->data_type == DT_LIST) {
-        res = (char *) calloc(2, sizeof(char));
-        strcat(res, "[");
-        for (int i = 0; i < obj->obj_list_cnt; ++i) {
-            char *item_repr = obj_get_repr(obj->obj_list[i]);
-
-            /*
-             * A space to put "," after each item
-             */
-            int extra_space = 2 * (i < obj->obj_list_cnt - 1);
-
-            res = (char *) realloc(res, strlen(res) + strlen(item_repr) + 1 + extra_space);
-            strcat(res, item_repr);
-            if (extra_space) strcat(res, ", ");
-            free(item_repr);
-        }
-        res = (char *) realloc(res, strlen(res) + 2);
-        strcat(res, "]");
-        return res;
-    }
-    return res;
-}
-
 RwnObj *visit(Interpreter *interpreter, AST *node) {
     if (node->node_type == NT_INT) return visit_int(interpreter, node);
     else if (node->node_type == NT_BIN_OP) return visit_binop(interpreter, node);
@@ -120,6 +78,48 @@ RwnObj *visit_list(Interpreter *interpreter, AST *node) {
     }
 
     return rwn_list_obj;
+}
+
+char *obj_get_repr(RwnObj *obj) {
+    char s[255] = "";
+    char *res;
+    int len;
+
+    if ((obj->data_type) == DT_INT) {
+        len = sprintf(s, "%d", obj->intval);
+        res = calloc(len + 1, sizeof(char));
+        strcpy(res, s);
+    } else if (obj->data_type == DT_FLOAT) {
+        len = sprintf(s, "%f", obj->floatval);
+        res = calloc(len + 1, sizeof(char));
+        strcpy(res, s);
+    } else if (obj->data_type == DT_STR) {
+        len = obj->strvallen + 2;
+        res = calloc(len + 1, sizeof(char));
+        strcpy(res, "'");
+        strcat(res, obj->strval);
+        strcat(res, "'");
+    } else if (obj->data_type == DT_LIST) {
+        res = (char *) calloc(2, sizeof(char));
+        strcat(res, "[");
+        for (int i = 0; i < obj->obj_list_cnt; ++i) {
+            char *item_repr = obj_get_repr(obj->obj_list[i]);
+
+            /*
+             * A space to put "," after each item
+             */
+            int extra_space = 2 * (i < obj->obj_list_cnt - 1);
+
+            res = (char *) realloc(res, strlen(res) + strlen(item_repr) + 1 + extra_space);
+            strcat(res, item_repr);
+            if (extra_space) strcat(res, ", ");
+            free(item_repr);
+        }
+        res = (char *) realloc(res, strlen(res) + 2);
+        strcat(res, "]");
+        return res;
+    }
+    return res;
 }
 
 void interpreter_init(Interpreter *interpreter) {
