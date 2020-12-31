@@ -281,6 +281,14 @@ void free_AST(AST *node) {
 //    }
 
     /*
+     * varaccess/assign cleanup
+     */
+    if (node->node_type == NT_VARACCESS || node->node_type == NT_VARASSIGN) {
+        if (node->var_node != NULL)
+            free_AST(node->var_node);
+    }
+
+    /*
      * Function node cleanup
      */
 

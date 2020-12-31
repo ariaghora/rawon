@@ -98,7 +98,7 @@ AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
 
 AST *create_varaccess_node(Token var_token) {
     AST *varaccess_node = calloc(1, sizeof(AST));
-    varaccess_node->node_type= NT_VARACCESS;
+    varaccess_node->node_type = NT_VARACCESS;
     varaccess_node->var_token = var_token;
     return varaccess_node;
 }
@@ -344,7 +344,6 @@ AST *parse_if_expr(Parser *parser) {
     AST *else_case = NULL;
 
     if (is_keyword(parser->current, "else")) {
-        printf("ELSE");
         parser_advance(parser);
         parser_skip_newline(parser);
         expect(TK_LBRACE, parser->current, "{");
