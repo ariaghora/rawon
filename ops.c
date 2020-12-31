@@ -121,3 +121,19 @@ RwnObj *op_ee(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
                                a->floatval == b->intval);
     }
 }
+
+RwnObj *op_gt(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
+    if (a->data_type == DT_INT && b->data_type == DT_INT) {
+        return create_bool_obj(interpreter,
+                               a->intval > b->intval);
+    } else if (a->data_type == DT_FLOAT && b->data_type == DT_FLOAT) {
+        return create_bool_obj(interpreter,
+                               a->floatval == b->floatval);
+    } else if (a->data_type == DT_INT && b->data_type == DT_FLOAT) {
+        return create_bool_obj(interpreter,
+                               a->intval == b->floatval);
+    } else {
+        return create_bool_obj(interpreter,
+                               a->floatval == b->intval);
+    }
+}

@@ -1,7 +1,9 @@
 #ifndef CRAWON_INTERPRETER_H
 #define CRAWON_INTERPRETER_H
 
-#define MAX_RWN_OBJ 1000
+#define MAX_RWN_OBJ 10000
+
+#include "3rd_party/stb_ds.h"
 
 typedef enum {
     DT_INT, DT_FLOAT, DT_BOOL, DT_STR, DT_NULL, DT_LIST
@@ -25,6 +27,17 @@ typedef struct {
 } RwnObjectTracker;
 
 typedef struct {
+    char *key;
+    RwnObj *value;
+} ObjMap;
+
+typedef struct tInterpreter {
+    struct tInterpreter *parent;
+
+    /* To store symbols, i.e., `varname`-`value` pairs */
+    ObjMap *symbol_table;
+
+    /* To track the created objects */
     RwnObjectTracker *tracker;
     int obj_cnt;
 } Interpreter;
@@ -54,6 +67,10 @@ RwnObj *visit_if(Interpreter *interpreter, AST *node);
 RwnObj *visit_int(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_str(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_varaccess(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_varassign(Interpreter *interpreter, AST *node);
 
 char *obj_get_repr(RwnObj *obj);
 

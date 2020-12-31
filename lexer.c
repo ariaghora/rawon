@@ -66,6 +66,7 @@ Token make_id_or_keyword(Lexer *lexer) {
     s[i] = '\0';
 
     if (strcmp(s, "if") == 0 ||
+        strcmp(s, "elif") == 0 ||
         strcmp(s, "else") == 0 ||
         strcmp(s, "for") == 0) {
         return create_token(TK_KEYWORD, s);

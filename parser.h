@@ -5,7 +5,8 @@
 typedef enum {
     NT_INT, NT_FLOAT, NT_STRING, NT_LIST,
     NT_BIN_OP, NT_UN_OP,
-    NT_IF, NT_FUNC_DEF, NT_FUNC_CALL
+    NT_IF, NT_FUNC_DEF, NT_FUNC_CALL,
+    NT_VARACCESS, NT_VARASSIGN,
 } node_type_t;
 
 typedef struct tAST {
@@ -28,6 +29,13 @@ typedef struct tAST {
      */
     struct tAST **node_list;
     int node_list_cnt;
+
+    /*
+     * Varassign node contains a token of variable name
+     * and the corresponding value node
+     */
+    Token var_token;
+    struct tAST *var_node;
 
     /*
      * An `if` node contains a list of conditions, a corresponding list of
@@ -77,6 +85,10 @@ AST *create_list_node(AST **node_list, int node_list_cnt);
 AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
                     int conditions_cnt);
 
+AST *create_varaccess_node(Token var_token);
+
+AST *create_varassign_node(Token var_token, AST *node);
+
 /*
  * Parsing functions
  */
@@ -106,6 +118,5 @@ AST *parse_power(Parser *parser);
 AST *parse_statement(Parser *parser);
 
 AST *parse_term(Parser *parser);
-
 
 #endif //CRAWON_PARSER_H

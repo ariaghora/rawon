@@ -96,6 +96,21 @@ AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
     return if_node;
 }
 
+AST *create_varaccess_node(Token var_token) {
+    AST *varaccess_node = calloc(1, sizeof(AST));
+    varaccess_node->node_type= NT_VARACCESS;
+    varaccess_node->var_token = var_token;
+    return varaccess_node;
+}
+
+AST *create_varassign_node(Token var_token, AST *node) {
+    AST *varassign_node = calloc(1, sizeof(AST));
+    varassign_node->node_type = NT_VARASSIGN;
+    varassign_node->var_token = var_token;
+    varassign_node->var_node = node;
+    return varassign_node;
+}
+
 AST *parser_parse(Parser *parser) {
     return parse_block(parser);
 }
@@ -127,7 +142,25 @@ AST *parse_atom(Parser *parser) {
          */
         parser_advance(parser);
         return create_string_node(tok);
+    } else if (tok.kind == TK_ID) {
+        /*
+         * Parse identifier, which can be:
+         * - Variable assignment
+         * - Variable access
+         */
+        Token var_tok = parser->current;
+        parser_advance(parser);
+        if (parser->current.kind == TK_EQ) {
+            parser_advance(parser);
+            AST *var_node = parse_expr(parser);
+            return create_varassign_node(var_tok, var_node);
+        } else {
+            return create_varaccess_node(var_tok);
+        }
     } else if (tok.kind == TK_LPAREN) {
+        /*
+         * Parse parenthesized expr
+         */
         parser_advance(parser);
         AST *expr = parse_expr(parser);
 
@@ -268,17 +301,66 @@ AST *parse_if_expr(Parser *parser) {
     NodeList *cases = calloc(1, sizeof(NodeList));;
     node_list_init(cases);
 
+    AST *block;
     /* if the block is not empty */
     if (parser->current.kind != TK_RBRACE) {
         /* Add the first case to the case list */
-        AST *block = parse_block(parser);
+        block = parse_block(parser);
         if (block != NULL)
             node_list_push(cases, block);
     }
 
     expect(TK_RBRACE, parser->current, "}");
+    parser_advance(parser);
+    parser_skip_newline(parser);
 
-    AST *res = create_if_node(conditions->arr, cases->arr, NULL, conditions->count);
+    while (is_keyword(parser->current, "elif")) {
+        parser_advance(parser);
+        expect(TK_LPAREN, parser->current, "(");
+        parser_advance(parser);
+
+        condition = parse_expr(parser);
+
+        expect(TK_RPAREN, parser->current, ")");
+        parser_advance(parser);
+        parser_skip_newline(parser);
+        expect(TK_LBRACE, parser->current, "{");
+        parser_advance(parser);
+        parser_skip_newline(parser);
+
+        block = parse_block(parser);
+
+        node_list_push(conditions, condition);
+        node_list_push(cases, block);
+
+        expect(TK_RBRACE, parser->current, "}");
+        parser_advance(parser);
+        parser_skip_newline(parser);
+    }
+
+    /*
+     * Capture `else` block
+     */
+    AST *else_case = NULL;
+
+    if (is_keyword(parser->current, "else")) {
+        printf("ELSE");
+        parser_advance(parser);
+        parser_skip_newline(parser);
+        expect(TK_LBRACE, parser->current, "{");
+        parser_advance(parser);
+        parser_skip_newline(parser);
+
+        else_case = parse_block(parser);
+
+        expect(TK_RBRACE, parser->current, "}");
+        parser_advance(parser);
+    }
+
+    AST *res = create_if_node(conditions->arr,
+                              cases->arr,
+                              else_case,
+                              conditions->count);
     free(cases);
     free(conditions);
 

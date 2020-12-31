@@ -64,6 +64,10 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
         return visit_list(interpreter, node);
     else if (node->node_type == NT_IF)
         return visit_if(interpreter, node);
+    else if (node->node_type == NT_VARACCESS)
+        return visit_varaccess(interpreter, node);
+    else if (node->node_type == NT_VARASSIGN)
+        return visit_varassign(interpreter, node);
     else {
         printf("Interpreter error.\n");
         exit(1);
@@ -75,8 +79,17 @@ RwnObj *visit_float(Interpreter *interpreter, AST *node) {
 }
 
 RwnObj *visit_if(Interpreter *interpreter, AST *node) {
-    RwnObj *res = create_number_obj(interpreter, -999, TK_INT);
-    return res;
+    for (int i = 0; i < node->conditions_cnt; ++i) {
+        if (node->if_conditions[i]->intval) {
+            visit(interpreter, node->if_cases[i]);
+            break;
+        }
+    }
+
+    if (node->else_case != NULL) {
+        visit(interpreter, node->else_case);
+    }
+    return create_null_obj(interpreter);
 }
 
 RwnObj *visit_int(Interpreter *interpreter, AST *node) {
@@ -127,6 +140,16 @@ RwnObj *visit_list(Interpreter *interpreter, AST *node) {
     return rwn_list_obj;
 }
 
+RwnObj *visit_varaccess(Interpreter *interpreter, AST *node) {
+    return shget(interpreter->symbol_table, node->var_token.txt);
+}
+
+RwnObj *visit_varassign(Interpreter *interpreter, AST *node) {
+    RwnObj *res = visit(interpreter, node->var_node);
+    shput(interpreter->symbol_table, node->var_token.txt, res);
+    return res;
+}
+
 char *obj_get_repr(RwnObj *obj) {
     char s[255] = "";
     char *res;
@@ -144,6 +167,10 @@ char *obj_get_repr(RwnObj *obj) {
         char *boolstr = obj->intval == 1 ? "true" : "false";
         res = calloc(strlen(boolstr) + 1, sizeof(char));
         strcpy(res, boolstr);
+    } else if (obj->data_type == DT_NULL) {
+        char *nullstr = "null";
+        res = calloc(strlen(nullstr) + 1, sizeof(char));
+        strcpy(res, nullstr);
     } else if (obj->data_type == DT_STR) {
         len = obj->strvallen + 2;
         res = calloc(len + 1, sizeof(char));
@@ -197,6 +224,8 @@ char *obj_typestr(RwnObj *obj) {
 
 void interpreter_init(Interpreter *interpreter) {
     interpreter->tracker = calloc(1, sizeof(RwnObjectTracker));
+    interpreter->parent = NULL;
+    interpreter->symbol_table = NULL;
 }
 
 void tracker_add_obj(Interpreter *interpreter, RwnObj *obj) {
@@ -225,10 +254,13 @@ void interpreter_cleanup(Interpreter *interpreter) {
         if (interpreter->tracker->objs[i]->strval != NULL) {
         }
 
-        free(interpreter->tracker->objs[i]->strval);
+        if (interpreter->tracker->objs[i]->strval != NULL) {
+            free(interpreter->tracker->objs[i]->strval);
+        }
         free(interpreter->tracker->objs[i]);
     }
 
+            hmfree(interpreter->symbol_table);
     free(interpreter->tracker);
     free(interpreter);
 }
@@ -243,7 +275,10 @@ void free_AST(AST *node) {
     /*
      * String AST node cleanup
      */
-    // free(node->strval);
+//    if (!node->strval){
+//
+//        free(node->strval);
+//    }
 
     /*
      * Function node cleanup
@@ -261,12 +296,17 @@ void free_AST(AST *node) {
             free(node->if_conditions[i]);
         }
 
-        free(node->if_conditions);
-        free(node->if_cases);
+        if (node->else_case != NULL)
+            free_AST(node->else_case);
+
+        if (node->if_conditions != NULL)
+            free(node->if_conditions);
+        if (node->if_cases != NULL)
+            free(node->if_cases);
     }
 
     /*
-     * Cleaning items if it is a list AST node
+     * Cleaning items if it is a `list` AST node
      */
     if (node->node_list_cnt > 0) {
         for (int i = 0; i < node->node_list_cnt; ++i) {
