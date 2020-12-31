@@ -71,6 +71,8 @@ RwnObj *visit_binop(Interpreter *interpreter, AST *node) {
     RwnObj *res;
     if (op.kind == TK_PLUS) {
         res = number_add(interpreter, left, right);
+    } else if (op.kind == TK_MINUS) {
+        res = number_sub(interpreter, left, right);
     } else if (op.kind == TK_MULT) {
         res = number_mul(interpreter, left, right);
     }

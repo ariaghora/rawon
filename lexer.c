@@ -4,6 +4,10 @@
 #include <ctype.h>
 #include "lexer.h"
 
+int is_keyword(Token tok, char *txt) {
+    return (tok.kind == TK_KEYWORD) && (strcmp(tok.txt, txt) == 0);
+}
+
 Token create_token(tok_kind_t kind, char *txt) {
     Token res;
     res.kind = kind;
@@ -51,6 +55,25 @@ Token make_string(Lexer *lexer, char delim) {
     return tok;
 }
 
+Token make_id_or_keyword(Lexer *lexer) {
+    char s[255] = "";
+    int i = 0;
+    while (isalpha(lexer->c) || lexer->c == '_') {
+        s[i++] = lexer->c;
+        lexer_advance(lexer);
+    }
+    lexer->c = lexer->src[lexer->idx--];
+    s[i] = '\0';
+
+    if (strcmp(s, "if") == 0 ||
+        strcmp(s, "else") == 0 ||
+        strcmp(s, "for") == 0) {
+        return create_token(TK_KEYWORD, s);
+    }
+
+    return create_token(TK_ID, s);
+}
+
 void lexer_init(Lexer *lexer, char *fn) {
     lexer->idx = 0;
     lexer->tkcnt = 0;
@@ -89,11 +112,16 @@ void lexer_lex(Lexer *lexer) {
         if ((lexer->c >= '0') && (lexer->c <= '9'))
             lexer_add_token(lexer, make_number(lexer));
 
-        /* Lex string token. */
+            /* Lex identifier */
+        else if (isalpha(lexer->c) || lexer->c == '_') {
+            lexer_add_token(lexer, make_id_or_keyword(lexer));
+        }
+
+            /* Lex string token. */
         else if (lexer->c == '\'' || lexer->c == '"')
             lexer_add_token(lexer, make_string(lexer, lexer->c));
 
-        /* Lex newline token. Semicolon and newline characters a allowed. */
+            /* Lex newline token. Semicolon and newline characters a allowed. */
         else if (lexer->c == ';' || lexer->c == '\n')
             lexer_add_token(lexer, create_token(TK_EOL, "EOL"));
 

@@ -125,7 +125,12 @@ AST *parse_atom(Parser *parser) {
 
         return expr;
     } else if (tok.kind == TK_LBRACKET) {
+        /*
+         * Parse list node
+         */
         return parse_list(parser);
+    } else if (is_keyword(tok, "if")) {
+        return parse_if_expr(parser);
     }
 
     return NULL;
@@ -216,6 +221,38 @@ AST *parse_expr(Parser *parser) {
 AST *parse_factor(Parser *parser) {
     AST *left = parse_power(parser);
     return left;
+}
+
+AST *parse_if_expr(Parser *parser) {
+    parser_advance(parser);
+    expect(TK_LPAREN, parser->current, "(");
+    parser_advance(parser);
+
+    AST *condition = parse_expr(parser);
+    if (condition == NULL) {
+        printf("Expected logical expression.\n");
+        exit(1);
+    }
+
+    NodeList *conditions = calloc(1, sizeof(NodeList));
+    node_list_init(conditions);
+
+    /* Add the first condition */
+    node_list_push(conditions, condition);
+
+    expect(TK_RPAREN, parser->current, ")");
+    parser_advance(parser);
+    parser_skip_newline(parser);
+    expect(TK_LBRACE, parser->current, "{");
+    parser_advance(parser);
+
+    NodeList *cases = calloc(1, sizeof(NodeList));;
+    node_list_init(cases);
+
+    /* Add the first case to the case list */
+    AST *block = parse_block(parser);
+    if (block != NULL)
+        node_list_push(cases, block);
 }
 
 AST *parse_list(Parser *parser) {

@@ -83,6 +83,8 @@ AST *parse_expr(Parser *parser);
 
 AST *parse_factor(Parser *parser);
 
+AST *parse_if_expr(Parser *parser);
+
 AST *parse_list(Parser *parser);
 
 AST *parse_power(Parser *parser);

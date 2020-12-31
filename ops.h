@@ -7,6 +7,8 @@
 
 RwnObj *number_add(Interpreter *interpreter, RwnObj *a, RwnObj *b);
 
+RwnObj *number_sub(Interpreter *interpreter, RwnObj *a, RwnObj *b);
+
 RwnObj *number_mul(Interpreter *interpreter, RwnObj *a, RwnObj *b);
 
 #endif //CRAWON_OPS_H

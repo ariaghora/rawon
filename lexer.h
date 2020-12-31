@@ -6,7 +6,7 @@
 
 typedef enum {
     /* Literal tokens */
-    TK_INT, TK_FLOAT, TK_STR,
+    TK_INT, TK_FLOAT, TK_STR, TK_ID, TK_KEYWORD,
 
     /* Arithmetic tokens */
     TK_PLUS, TK_MINUS, TK_MULT, TK_DIV,
@@ -15,7 +15,7 @@ typedef enum {
     TK_LPAREN, TK_RPAREN, TK_LBRACE, TK_RBRACE, TK_LBRACKET, TK_RBRACKET,
 
     /* Other tokens */
-     TK_COMMA, TK_EOL, TK_EOF,
+    TK_COMMA, TK_EOL, TK_EOF,
 } tok_kind_t;
 
 typedef struct {
@@ -31,6 +31,8 @@ typedef struct {
     char src[MAX_SRC_LEN];
     Token tokens[MAX_TOKEN_LEN];
 } Lexer;
+
+int is_keyword(Token tok, char *txt);
 
 Token create_token(tok_kind_t kind, char *txt);
 

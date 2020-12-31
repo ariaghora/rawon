@@ -5,6 +5,8 @@
 #include "parser.h"
 #include "interpreter.h"
 
+#include "objtable.h"
+
 
 int main(int argc, char *argv[]) {
 
@@ -26,7 +28,7 @@ int main(int argc, char *argv[]) {
     RwnObj *result = interpreter_traverse(interpreter, root);
     char *result_repr = obj_get_repr(result);
 
-    printf("Output \u2192 %s\n", result_repr);
+    printf("Output >>\n%s\n", result_repr);
 
     interpreter_cleanup(interpreter);
     //--- Interpreter end
