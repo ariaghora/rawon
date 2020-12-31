@@ -96,10 +96,19 @@ void lexer_advance(Lexer *lexer) {
     lexer->c = lexer->src[++lexer->idx];
 }
 
-void lexer_add_token(Lexer *lexer, Token token) {
+void lexer_advance_n(Lexer *lexer, int n) {
+    for (int i = 0; i < n; ++i)
+        lexer_advance(lexer);
+}
+
+void lexer_add_token_n_char(Lexer *lexer, Token token, int n) {
     lexer->tkcnt++;
     lexer->tokens[lexer->tkcnt - 1] = token;
-    lexer_advance(lexer);
+    lexer_advance_n(lexer, n);
+}
+
+void lexer_add_token(Lexer *lexer, Token token) {
+    lexer_add_token_n_char(lexer, token, 1);
 }
 
 void lexer_lex(Lexer *lexer) {
@@ -109,20 +118,18 @@ void lexer_lex(Lexer *lexer) {
             lexer_advance(lexer);
 
         /* Lex numeric token. */
+
         if ((lexer->c >= '0') && (lexer->c <= '9'))
             lexer_add_token(lexer, make_number(lexer));
 
+        else if (isalpha(lexer->c) || lexer->c == '_')
             /* Lex identifier */
-        else if (isalpha(lexer->c) || lexer->c == '_') {
             lexer_add_token(lexer, make_id_or_keyword(lexer));
-        }
-
-            /* Lex string token. */
         else if (lexer->c == '\'' || lexer->c == '"')
+            /* Lex string token. */
             lexer_add_token(lexer, make_string(lexer, lexer->c));
-
-            /* Lex newline token. Semicolon and newline characters a allowed. */
         else if (lexer->c == ';' || lexer->c == '\n')
+            /* Lex newline token. Semicolon and newline characters a allowed. */
             lexer_add_token(lexer, create_token(TK_EOL, "EOL"));
 
         else if (lexer->c == '+')
@@ -133,7 +140,20 @@ void lexer_lex(Lexer *lexer) {
             lexer_add_token(lexer, create_token(TK_MULT, "*"));
         else if (lexer->c == '/')
             lexer_add_token(lexer, create_token(TK_DIV, "/"));
-        else if (lexer->c == '(')
+
+        else if (lexer->c == '=') {
+            if (lexer_peek(lexer, 1) == '=') {
+                /* When encountering `=`,
+                 * case 1: check if next token should be `==` (logical equals).
+                 */
+                lexer_add_token_n_char(lexer, create_token(TK_EE, "=="), 2);
+            } else {
+                /*
+                 * case 2: check if next token should be `=` (assignment op)
+                 */
+                lexer_add_token(lexer, create_token(TK_EQ, "="));
+            }
+        } else if (lexer->c == '(')
             lexer_add_token(lexer, create_token(TK_LPAREN, "("));
         else if (lexer->c == ')')
             lexer_add_token(lexer, create_token(TK_RPAREN, ")"));
@@ -141,6 +161,10 @@ void lexer_lex(Lexer *lexer) {
             lexer_add_token(lexer, create_token(TK_LBRACKET, "["));
         else if (lexer->c == ']')
             lexer_add_token(lexer, create_token(TK_RBRACKET, "]"));
+        else if (lexer->c == '{')
+            lexer_add_token(lexer, create_token(TK_LBRACE, "{"));
+        else if (lexer->c == '}')
+            lexer_add_token(lexer, create_token(TK_RBRACE, "}"));
         else if (lexer->c == ',')
             lexer_add_token(lexer, create_token(TK_COMMA, ","));
         else {
@@ -148,7 +172,10 @@ void lexer_lex(Lexer *lexer) {
             exit(1);
             lexer_advance(lexer);
         }
-
     }
     lexer_add_token(lexer, create_token(TK_EOF, "EOF"));
+}
+
+char lexer_peek(Lexer *lexer, int offset) {
+    return lexer->src[lexer->idx + offset];
 }

@@ -85,6 +85,17 @@ AST *create_list_node(AST **node_list, int node_list_cnt) {
     return list_node;
 }
 
+AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
+                    int conditions_cnt) {
+    AST *if_node = calloc(1, sizeof(AST));
+    if_node->node_type = NT_IF;
+    if_node->if_conditions = conditions;
+    if_node->if_cases = cases;
+    if_node->else_case = else_case;
+    if_node->conditions_cnt = conditions_cnt;
+    return if_node;
+}
+
 AST *parser_parse(Parser *parser) {
     return parse_block(parser);
 }
@@ -204,6 +215,12 @@ AST *parse_comp_expr(Parser *parser) {
     /*
      * Parse ==, >, >=, etc
      */
+    while (parser->current.kind == TK_EE) {
+        Token op = parser->current;
+        parser_advance(parser);
+        AST *right = parse_arith(parser);
+        left = create_bin_op(left, right, op);
+    }
 
     return left;
 }
@@ -245,14 +262,27 @@ AST *parse_if_expr(Parser *parser) {
     parser_skip_newline(parser);
     expect(TK_LBRACE, parser->current, "{");
     parser_advance(parser);
+    parser_skip_newline(parser);
 
+    /* Prepare the list to hold all possible cases */
     NodeList *cases = calloc(1, sizeof(NodeList));;
     node_list_init(cases);
 
-    /* Add the first case to the case list */
-    AST *block = parse_block(parser);
-    if (block != NULL)
-        node_list_push(cases, block);
+    /* if the block is not empty */
+    if (parser->current.kind != TK_RBRACE) {
+        /* Add the first case to the case list */
+        AST *block = parse_block(parser);
+        if (block != NULL)
+            node_list_push(cases, block);
+    }
+
+    expect(TK_RBRACE, parser->current, "}");
+
+    AST *res = create_if_node(conditions->arr, cases->arr, NULL, conditions->count);
+    free(cases);
+    free(conditions);
+
+    return res;
 }
 
 AST *parse_list(Parser *parser) {

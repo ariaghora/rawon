@@ -20,11 +20,28 @@ RwnObj *create_number_obj(Interpreter *interpreter,
     return res;
 }
 
-RwnObj *create_str_obj(Interpreter *interpreter, AST *node) {
+RwnObj *create_bool_obj(Interpreter *interpreter, int val) {
     RwnObj *res = calloc(1, sizeof(RwnObj));
-    res->strval = node->strval;
-    res->strvallen = node->strvallen;
+    res->intval = val;
+    res->data_type = DT_BOOL;
+    tracker_add_obj(interpreter, res);
+
+    return res;
+}
+
+RwnObj *create_str_obj(Interpreter *interpreter, char *val) {
+    RwnObj *res = calloc(1, sizeof(RwnObj));
+    res->strval = val;
+    res->strvallen = strlen(val);
     res->data_type = DT_STR;
+
+    tracker_add_obj(interpreter, res);
+    return res;
+}
+
+RwnObj *create_null_obj(Interpreter *interpreter) {
+    RwnObj *res = calloc(1, sizeof(RwnObj));
+    res->data_type = DT_NULL;
 
     tracker_add_obj(interpreter, res);
     return res;
@@ -45,6 +62,8 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
         return visit_str(interpreter, node);
     else if (node->node_type == NT_LIST)
         return visit_list(interpreter, node);
+    else if (node->node_type == NT_IF)
+        return visit_if(interpreter, node);
     else {
         printf("Interpreter error.\n");
         exit(1);
@@ -55,12 +74,17 @@ RwnObj *visit_float(Interpreter *interpreter, AST *node) {
     return create_number_obj(interpreter, node->floatval, TK_FLOAT);
 }
 
+RwnObj *visit_if(Interpreter *interpreter, AST *node) {
+    RwnObj *res = create_number_obj(interpreter, -999, TK_INT);
+    return res;
+}
+
 RwnObj *visit_int(Interpreter *interpreter, AST *node) {
     return create_number_obj(interpreter, node->intval, TK_INT);
 }
 
 RwnObj *visit_str(Interpreter *interpreter, AST *node) {
-    return create_str_obj(interpreter, node);
+    return create_str_obj(interpreter, node->strval);
 }
 
 RwnObj *visit_binop(Interpreter *interpreter, AST *node) {
@@ -70,11 +94,13 @@ RwnObj *visit_binop(Interpreter *interpreter, AST *node) {
 
     RwnObj *res;
     if (op.kind == TK_PLUS) {
-        res = number_add(interpreter, left, right);
+        res = op_add(interpreter, left, right);
     } else if (op.kind == TK_MINUS) {
-        res = number_sub(interpreter, left, right);
+        res = op_sub(interpreter, left, right);
     } else if (op.kind == TK_MULT) {
-        res = number_mul(interpreter, left, right);
+        res = op_mul(interpreter, left, right);
+    } else if (op.kind == TK_EE) {
+        res = op_ee(interpreter, left, right);
     }
 
     return res;
@@ -114,6 +140,10 @@ char *obj_get_repr(RwnObj *obj) {
         len = sprintf(s, "%.2f", obj->floatval);
         res = calloc(len + 1, sizeof(char));
         strcpy(res, s);
+    } else if (obj->data_type == DT_BOOL) {
+        char *boolstr = obj->intval == 1 ? "true" : "false";
+        res = calloc(strlen(boolstr) + 1, sizeof(char));
+        strcpy(res, boolstr);
     } else if (obj->data_type == DT_STR) {
         len = obj->strvallen + 2;
         res = calloc(len + 1, sizeof(char));
@@ -139,6 +169,28 @@ char *obj_get_repr(RwnObj *obj) {
         res = (char *) realloc(res, strlen(res) + 2);
         strcat(res, "]");
         return res;
+    }
+    return res;
+}
+
+char *obj_typestr(RwnObj *obj) {
+    char *res = malloc(20 * sizeof(char));
+
+    switch (obj->data_type) {
+        case DT_INT:
+            strcpy(res, "int");
+            break;
+        case DT_FLOAT:
+            strcpy(res, "float");
+            break;
+        case DT_STR:
+            strcpy(res, "str");
+            break;
+        case DT_NULL:
+            strcpy(res, "null");
+            break;
+        default:
+            strcpy(res, "unknown");
     }
     return res;
 }
@@ -170,6 +222,10 @@ void interpreter_cleanup(Interpreter *interpreter) {
             free(interpreter->tracker->objs[i]->obj_list);
         }
 
+        if (interpreter->tracker->objs[i]->strval != NULL) {
+        }
+
+        free(interpreter->tracker->objs[i]->strval);
         free(interpreter->tracker->objs[i]);
     }
 
@@ -187,11 +243,27 @@ void free_AST(AST *node) {
     /*
      * String AST node cleanup
      */
-    free(node->strval);
+    // free(node->strval);
 
     /*
      * Function node cleanup
      */
+
+    /*
+     * If-expr node cleanup
+     */
+    if (node->node_type == NT_IF) {
+        for (int i = 0; i < node->conditions_cnt; ++i) {
+            free_AST(node->if_cases[i]);
+
+            /* free is enough, since if conditions are just a
+             * single expression */
+            free(node->if_conditions[i]);
+        }
+
+        free(node->if_conditions);
+        free(node->if_cases);
+    }
 
     /*
      * Cleaning items if it is a list AST node

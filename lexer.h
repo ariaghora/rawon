@@ -6,16 +6,22 @@
 
 typedef enum {
     /* Literal tokens */
-    TK_INT, TK_FLOAT, TK_STR, TK_ID, TK_KEYWORD,
+    TK_INT, TK_FLOAT, TK_STR,
+    TK_ID, TK_KEYWORD,
 
     /* Arithmetic tokens */
     TK_PLUS, TK_MINUS, TK_MULT, TK_DIV,
 
+    /* Logical op tokens */
+    TK_EE,
+
     /* Delimiters */
-    TK_LPAREN, TK_RPAREN, TK_LBRACE, TK_RBRACE, TK_LBRACKET, TK_RBRACKET,
+    TK_LPAREN, TK_RPAREN,
+    TK_LBRACE, TK_RBRACE,
+    TK_LBRACKET, TK_RBRACKET,
 
     /* Other tokens */
-    TK_COMMA, TK_EOL, TK_EOF,
+    TK_EQ, TK_COMMA, TK_EOL, TK_EOF,
 } tok_kind_t;
 
 typedef struct {
@@ -47,6 +53,8 @@ void lexer_advance(Lexer *lexer);
 void lexer_add_token(Lexer *lexer, Token token);
 
 void lexer_lex(Lexer *lexer);
+
+char lexer_peek(Lexer *lexer, int offset);
 
 
 #endif //CRAWON_LEXER_H

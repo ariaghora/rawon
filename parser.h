@@ -3,7 +3,9 @@
 
 
 typedef enum {
-    NT_INT, NT_FLOAT, NT_STRING, NT_LIST, NT_BIN_OP, NT_UN_OP, NT_FUNC_DEF, NT_FUNC_CALL
+    NT_INT, NT_FLOAT, NT_STRING, NT_LIST,
+    NT_BIN_OP, NT_UN_OP,
+    NT_IF, NT_FUNC_DEF, NT_FUNC_CALL
 } node_type_t;
 
 typedef struct tAST {
@@ -26,6 +28,15 @@ typedef struct tAST {
      */
     struct tAST **node_list;
     int node_list_cnt;
+
+    /*
+     * An `if` node contains a list of conditions, a corresponding list of
+     * cases, and an `else` case
+     */
+    struct tAST **if_conditions;
+    struct tAST **if_cases;
+    struct tAST *else_case;
+    int conditions_cnt;
 } AST;
 
 typedef struct {
@@ -62,6 +73,9 @@ AST *create_string_node(Token tok);
 AST *create_bin_op(AST *left, AST *right, Token op);
 
 AST *create_list_node(AST **node_list, int node_list_cnt);
+
+AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
+                    int conditions_cnt);
 
 /*
  * Parsing functions
