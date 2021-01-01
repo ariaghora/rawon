@@ -322,7 +322,8 @@ void free_AST(AST *node) {
      */
     if (node->node_type == NT_IF) {
         for (int i = 0; i < node->conditions_cnt; ++i) {
-            free_AST(node->if_cases[i]);
+            if (node->if_cases[i] != NULL)
+                free_AST(node->if_cases[i]);
 
             /* free is enough, since if conditions are just a
              * single expression */

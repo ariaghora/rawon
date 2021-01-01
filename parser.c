@@ -365,7 +365,7 @@ AST *parse_if_expr(Parser *parser) {
     NodeList *cases = calloc(1, sizeof(NodeList));;
     node_list_init(cases);
 
-    AST *block;
+    AST *block = NULL;
     /* if the block is not empty */
     if (parser->current.kind != TK_RBRACE) {
         /* Add the first case to the case list */
