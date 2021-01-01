@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "lexer.h"
 #include "parser.h"
-
+#include "3rd_party/stb_ds.h"
 
 void node_list_init(NodeList *node_list) {
     node_list->count = 0;
@@ -75,6 +75,16 @@ AST *create_bin_op(AST *left, AST *right, Token op) {
     binop->op = op;
     binop->right = right;
     return binop;
+}
+
+AST *create_funcdef_node(Token name, Token *arglist, AST *body) {
+    AST *funcdef_node = calloc(1, sizeof(AST));
+    funcdef_node->node_type = NT_FUNC_DEF;
+    funcdef_node->fn_arglist = arglist;
+    funcdef_node->fn_body = body;
+    funcdef_node->fn_name = name;
+
+    return funcdef_node;
 }
 
 AST *create_list_node(AST **node_list, int node_list_cnt) {
@@ -175,6 +185,8 @@ AST *parse_atom(Parser *parser) {
         return parse_list(parser);
     } else if (is_keyword(tok, "if")) {
         return parse_if_expr(parser);
+    } else if (is_keyword(tok, "fn")) {
+        return parse_funcdef(parser);
     }
 
     return NULL;
@@ -271,6 +283,58 @@ AST *parse_expr(Parser *parser) {
 AST *parse_factor(Parser *parser) {
     AST *left = parse_power(parser);
     return left;
+}
+
+AST *parse_funcdef(Parser *parser) {
+    parser_advance(parser);
+    expect(TK_ID, parser->current, "identifier");
+    Token func_name = parser->current;
+
+    /* opening parentheses */
+    parser_advance(parser);
+    expect(TK_LPAREN, parser->current, "(");
+    parser_advance(parser);
+
+    Token *arglist = NULL;
+    /* Do the function have arguments? If so, store them in a
+     * list of argument.
+     * */
+    if (parser->current.kind == TK_RPAREN)
+        parser_advance(parser);
+    else if (parser->current.kind == TK_ID) {
+                arrput(arglist, parser->current);
+        parser_advance(parser);
+        while (parser->current.kind == TK_COMMA) {
+            parser_advance(parser);
+            expect(TK_ID, parser->current, "identifier");
+                    arrput(arglist, parser->current);
+            parser_advance(parser);
+        }
+
+        expect(TK_RPAREN, parser->current, ")");
+    } else {
+        printf("Expected `)` or `identifier`.");
+        exit(1);
+    }
+
+    parser_advance(parser);
+    parser_skip_newline(parser);
+    expect(TK_LBRACE, parser->current, "{");
+    parser_advance(parser);
+    parser_skip_newline(parser);
+
+    /* Is the function's body not empty (i.e., immediately encountering
+     * right brace token)? */
+    AST *body = NULL;
+    if (parser->current.kind != TK_RBRACE) {
+        /* If not, parse the function body. */
+        body = parse_block(parser);
+    }
+
+    /* Finally, we expect closing brace. */
+    expect(TK_RBRACE, parser->current, "}");
+    parser_advance(parser);
+    return create_funcdef_node(func_name, arglist, body);
 }
 
 AST *parse_if_expr(Parser *parser) {

@@ -17,34 +17,35 @@ typedef struct tAST {
     char *strval;
     int strvallen;
 
-    /*
-     * For unary operation node, `left` is used as the operand
-     */
+    /* For unary operation node, `left` is used as the operand */
     struct tAST *left;
     struct tAST *right;
     Token op;
 
-    /*
-     * A list node contains a node list
-     */
+    /* A list node contains a node list */
     struct tAST **node_list;
     int node_list_cnt;
 
-    /*
-     * Varassign node contains a token of variable name
+    /* Varassign node contains a token of variable name
      * and the corresponding value node
      */
     Token var_token;
     struct tAST *var_node;
 
-    /*
-     * An `if` node contains a list of conditions, a corresponding list of
+    /* An `if` node contains a list of conditions, a corresponding list of
      * cases, and an `else` case
      */
     struct tAST **if_conditions;
     struct tAST **if_cases;
     struct tAST *else_case;
     int conditions_cnt;
+
+    /* A function definition node contains an argument list and a function
+     * body node
+     */
+    Token fn_name;
+    Token *fn_arglist;
+    struct tAST *fn_body;
 } AST;
 
 typedef struct {
@@ -80,6 +81,8 @@ AST *create_string_node(Token tok);
 
 AST *create_bin_op(AST *left, AST *right, Token op);
 
+AST *create_funcdef_node(Token name, Token *arglist, AST *body);
+
 AST *create_list_node(AST **node_list, int node_list_cnt);
 
 AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
@@ -108,6 +111,8 @@ AST *parse_comp_expr(Parser *parser);
 AST *parse_expr(Parser *parser);
 
 AST *parse_factor(Parser *parser);
+
+AST *parse_funcdef(Parser *parser);
 
 AST *parse_if_expr(Parser *parser);
 

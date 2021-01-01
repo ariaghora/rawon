@@ -6,7 +6,8 @@
 #include "3rd_party/stb_ds.h"
 
 typedef enum {
-    DT_INT, DT_FLOAT, DT_BOOL, DT_STR, DT_NULL, DT_LIST
+    DT_INT, DT_FLOAT, DT_BOOL, DT_STR, DT_NULL, DT_LIST,
+    DT_FUNC
 } data_type_t;
 
 typedef struct tRwnObj {
@@ -18,6 +19,8 @@ typedef struct tRwnObj {
 
     struct tRwnObj **obj_list;
     int obj_list_cnt;
+
+    char *funcname;
 
     data_type_t data_type;
 } RwnObj;
@@ -52,6 +55,8 @@ RwnObj *create_str_obj(Interpreter *interpreter, char *val);
 
 RwnObj *create_null_obj(Interpreter *interpreter);
 
+RwnObj *create_func(Interpreter *interpreter, char *name);
+
 RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node);
 
 RwnObj *visit(Interpreter *interpreter, AST *node);
@@ -59,6 +64,8 @@ RwnObj *visit(Interpreter *interpreter, AST *node);
 RwnObj *visit_binop(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_float(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_funcdef(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_list(Interpreter *interpreter, AST *node);
 

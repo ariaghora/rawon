@@ -47,6 +47,15 @@ RwnObj *create_null_obj(Interpreter *interpreter) {
     return res;
 }
 
+RwnObj *create_func(Interpreter *interpreter, char *name) {
+    RwnObj *res = calloc(1, sizeof(RwnObj));
+    res->data_type = DT_FUNC;
+    res->funcname = name;
+
+    tracker_add_obj(interpreter, res);
+    return res;
+}
+
 RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node) {
     return visit(interpreter, node);
 }
@@ -68,6 +77,8 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
         return visit_varaccess(interpreter, node);
     else if (node->node_type == NT_VARASSIGN)
         return visit_varassign(interpreter, node);
+    else if (node->node_type == NT_FUNC_DEF)
+        return visit_funcdef(interpreter, node);
     else {
         printf("Interpreter error.\n");
         exit(1);
@@ -76,6 +87,12 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
 
 RwnObj *visit_float(Interpreter *interpreter, AST *node) {
     return create_number_obj(interpreter, node->floatval, TK_FLOAT);
+}
+
+RwnObj *visit_funcdef(Interpreter *interpreter, AST *node) {
+    RwnObj *res = create_func(interpreter, node->fn_name.txt);
+    shput(interpreter->symbol_table, node->fn_name.txt, res);
+    return res;
 }
 
 RwnObj *visit_if(Interpreter *interpreter, AST *node) {
@@ -141,7 +158,12 @@ RwnObj *visit_list(Interpreter *interpreter, AST *node) {
 }
 
 RwnObj *visit_varaccess(Interpreter *interpreter, AST *node) {
-    return shget(interpreter->symbol_table, node->var_token.txt);
+    RwnObj *res = shget(interpreter->symbol_table, node->var_token.txt);
+    if (res == NULL) {
+        printf("Error: Identifier `%s` not found.\n", node->var_token.txt);
+        exit(1);
+    }
+    return res;
 }
 
 RwnObj *visit_varassign(Interpreter *interpreter, AST *node) {
@@ -196,6 +218,16 @@ char *obj_get_repr(RwnObj *obj) {
         res = (char *) realloc(res, strlen(res) + 2);
         strcat(res, "]");
         return res;
+    } else if (obj->data_type == DT_FUNC) {
+        char *pre = "<function ";
+        char *funcname = obj->funcname;
+        char *post = ">";
+        res = calloc(strlen(pre) + strlen(funcname) + strlen(post) + 1,
+                     sizeof(char));
+        strcat(res, pre);
+        strcat(res, funcname);
+        strcat(res, post);
+        res[strlen(res)] = '\0';
     }
     return res;
 }
@@ -274,11 +306,8 @@ void free_AST(AST *node) {
 
     /*
      * String AST node cleanup
+     * (IDK. Maybe unnecessary? )
      */
-//    if (!node->strval){
-//
-//        free(node->strval);
-//    }
 
     /*
      * varaccess/assign cleanup
@@ -287,10 +316,6 @@ void free_AST(AST *node) {
         if (node->var_node != NULL)
             free_AST(node->var_node);
     }
-
-    /*
-     * Function node cleanup
-     */
 
     /*
      * If-expr node cleanup
@@ -313,14 +338,24 @@ void free_AST(AST *node) {
             free(node->if_cases);
     }
 
-    /*
-     * Cleaning items if it is a `list` AST node
-     */
+    /* Funcdef node cleanup */
+    if (node->node_type == NT_FUNC_DEF) {
+        if (node->fn_body != NULL) {
+            free_AST(node->fn_body);
+        }
+
+        if (node->fn_arglist != NULL) {
+                    arrfree(node->fn_arglist);
+        }
+    }
+
+    /* Cleaning items if it is a `list` AST node */
     if (node->node_list_cnt > 0) {
         for (int i = 0; i < node->node_list_cnt; ++i) {
             free_AST(node->node_list[i]);
         }
-        free(node->node_list);
+        if (node->node_list != NULL)
+            free(node->node_list);
     }
 
     free(node);
