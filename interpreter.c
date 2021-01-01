@@ -301,7 +301,7 @@ void free_AST(AST *node) {
 
             /* free is enough, since if conditions are just a
              * single expression */
-            free(node->if_conditions[i]);
+            free_AST(node->if_conditions[i]);
         }
 
         if (node->else_case != NULL)
