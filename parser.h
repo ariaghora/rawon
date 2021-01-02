@@ -46,6 +46,12 @@ typedef struct tAST {
     Token fn_name;
     Token *fn_arglist;
     struct tAST *fn_body;
+
+    /* A function call node contains a node to call and an argument list.
+     */
+    struct tAST **fcall_arglsit;
+    struct tAST *fcall_node_to_call;
+
 } AST;
 
 typedef struct {
@@ -80,6 +86,8 @@ AST *create_number_node(Token tok);
 AST *create_string_node(Token tok);
 
 AST *create_bin_op(AST *left, AST *right, Token op);
+
+AST *create_funccall_node(AST *node_to_call, AST **arglist);
 
 AST *create_funcdef_node(Token name, Token *arglist, AST *body);
 

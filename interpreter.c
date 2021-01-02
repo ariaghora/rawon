@@ -47,10 +47,13 @@ RwnObj *create_null_obj(Interpreter *interpreter) {
     return res;
 }
 
-RwnObj *create_func(Interpreter *interpreter, char *name) {
+RwnObj *create_func(Interpreter *interpreter, char *name, char **argnames,
+                    AST *body) {
     RwnObj *res = calloc(1, sizeof(RwnObj));
     res->data_type = DT_FUNC;
     res->funcname = name;
+    res->funcargnames = argnames;
+    res->funcbody = body;
 
     tracker_add_obj(interpreter, res);
     return res;
@@ -77,6 +80,8 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
         return visit_varaccess(interpreter, node);
     else if (node->node_type == NT_VARASSIGN)
         return visit_varassign(interpreter, node);
+    else if (node->node_type == NT_FUNC_CALL)
+        return visit_funccall(interpreter, node);
     else if (node->node_type == NT_FUNC_DEF)
         return visit_funcdef(interpreter, node);
     else {
@@ -89,9 +94,43 @@ RwnObj *visit_float(Interpreter *interpreter, AST *node) {
     return create_number_obj(interpreter, node->floatval, TK_FLOAT);
 }
 
+RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
+    AST *node_to_call = node->fcall_node_to_call;
+    RwnObj *value_to_call = visit(interpreter, node_to_call);
+
+    /* This funcbody is a list of statements. Better iterate it
+     * one by one to detect return statement. */
+    AST* funcbody = value_to_call->funcbody;
+
+    Interpreter *local_itptr = calloc(1, sizeof(Interpreter));
+    interpreter_init(local_itptr);
+    local_itptr->parent = interpreter;
+
+    for (int i = 0; i < arrlen(node->fcall_arglsit); ++i) {
+        /* actual params */
+        RwnObj *param = visit(interpreter, node->fcall_arglsit[i]);
+
+        /* store param in function's local symbol table */
+        shput(local_itptr->symbol_table,
+              value_to_call->funcargnames[i],
+              param);
+    }
+
+    /* All the local variables set-up, we are ready to interpret function's
+     * body */
+    RwnObj *func_body = visit(local_itptr, funcbody);
+    printf("%s\n", obj_get_repr(func_body));
+    return create_null_obj(interpreter);
+}
+
 RwnObj *visit_funcdef(Interpreter *interpreter, AST *node) {
-    RwnObj *res = create_func(interpreter, node->fn_name.txt);
+    char **argnames = NULL;
+    for (int i = 0; i < arrlen(node->fn_arglist); ++i) {
+        arrpush(argnames, node->fn_arglist[i].txt);
+    }
+    RwnObj *res = create_func(interpreter, node->fn_name.txt, argnames, node->fn_body);
     shput(interpreter->symbol_table, node->fn_name.txt, res);
+
     return res;
 }
 
@@ -283,12 +322,16 @@ void interpreter_cleanup(Interpreter *interpreter) {
             free(interpreter->tracker->objs[i]->obj_list);
         }
 
-        if (interpreter->tracker->objs[i]->strval != NULL) {
-        }
-
+        /* in case the string object's string value is not freed, free it */
         if (interpreter->tracker->objs[i]->strval != NULL) {
             free(interpreter->tracker->objs[i]->strval);
         }
+
+        /* if the object is a function object, then free the argnames array */
+        if (interpreter->tracker->objs[i]->funcargnames != NULL) {
+                    arrfree(interpreter->tracker->objs[i]->funcargnames);
+        }
+
         free(interpreter->tracker->objs[i]);
     }
 
@@ -348,6 +391,19 @@ void free_AST(AST *node) {
         if (node->fn_arglist != NULL) {
                     arrfree(node->fn_arglist);
         }
+    }
+
+    /* Funccall node cleanup */
+    if (node->node_type == NT_FUNC_CALL) {
+        if (node->fcall_arglsit != NULL) {
+            for (int i = 0; i < arrlen(node->fcall_arglsit); ++i) {
+                free_AST(node->fcall_arglsit[i]);
+            }
+                    arrfree(node->fcall_arglsit);
+        }
+
+        if (node->fcall_node_to_call != NULL)
+            free_AST(node->fcall_node_to_call);
     }
 
     /* Cleaning items if it is a `list` AST node */

@@ -17,10 +17,14 @@ typedef struct tRwnObj {
     char *strval;
     int strvallen;
 
+    /* list object properties */
     struct tRwnObj **obj_list;
     int obj_list_cnt;
 
+    /* func object properties */
     char *funcname;
+    char **funcargnames;
+    AST *funcbody;
 
     data_type_t data_type;
 } RwnObj;
@@ -55,7 +59,9 @@ RwnObj *create_str_obj(Interpreter *interpreter, char *val);
 
 RwnObj *create_null_obj(Interpreter *interpreter);
 
-RwnObj *create_func(Interpreter *interpreter, char *name);
+RwnObj *create_func(Interpreter *interpreter, char *name,
+                    char **argnames,
+                    AST* body);
 
 RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node);
 
@@ -64,6 +70,8 @@ RwnObj *visit(Interpreter *interpreter, AST *node);
 RwnObj *visit_binop(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_float(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_funccall(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_funcdef(Interpreter *interpreter, AST *node);
 

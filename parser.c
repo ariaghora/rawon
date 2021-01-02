@@ -77,6 +77,14 @@ AST *create_bin_op(AST *left, AST *right, Token op) {
     return binop;
 }
 
+AST *create_funccall_node(AST *node_to_call, AST **arglist) {
+    AST *funccall_node = calloc(1, sizeof(AST));
+    funccall_node->node_type = NT_FUNC_CALL;
+    funccall_node->fcall_node_to_call = node_to_call;
+    funccall_node->fcall_arglsit = arglist;
+    return funccall_node;
+}
+
 AST *create_funcdef_node(Token name, Token *arglist, AST *body) {
     AST *funcdef_node = calloc(1, sizeof(AST));
     funcdef_node->node_type = NT_FUNC_DEF;
@@ -155,7 +163,7 @@ AST *parse_atom(Parser *parser) {
     } else if (tok.kind == TK_ID) {
         /*
          * Parse identifier, which can be:
-         * - Variable assignment
+         * - Variable assignment, if the next token is `=`
          * - Variable access
          */
         Token var_tok = parser->current;
@@ -243,6 +251,25 @@ AST *parse_call(Parser *parser) {
      * Parse function call here later
      * if current token == lparen
      */
+    if (parser->current.kind == TK_LPAREN) {
+        AST **arglist = NULL;
+        parser_advance(parser);
+
+        if (parser->current.kind == TK_RPAREN) {
+            parser_advance(parser);
+        } else {
+            arrpush(arglist, parse_expr(parser));
+            while (parser->current.kind==TK_COMMA) {
+                parser_advance(parser);
+                arrpush(arglist, parse_expr(parser));
+            }
+
+            expect(TK_RPAREN, parser->current, ")");
+            parser_advance(parser);
+        }
+
+        return create_funccall_node(at, arglist);
+    }
 
     return at;
 
