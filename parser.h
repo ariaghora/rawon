@@ -5,7 +5,10 @@
 typedef enum {
     NT_INT, NT_FLOAT, NT_STRING, NT_LIST,
     NT_BIN_OP, NT_UN_OP,
-    NT_IF, NT_FUNC_DEF, NT_FUNC_CALL,
+    NT_IF,
+    NT_FUNC_DEF,
+    NT_FUNC_CALL,
+    NT_BUILTIN_FUNC_CALL, /* distinction from run-time created function */
     NT_VARACCESS, NT_VARASSIGN,
 } node_type_t;
 

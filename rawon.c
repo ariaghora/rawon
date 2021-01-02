@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #define STB_DS_IMPLEMENTATION
+
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
 
+RwnObj *print(Interpreter *context, RwnObj **args) {
+    printf("hey...\n");
+    return create_null_obj(context);
+}
 
 int main(int argc, char *argv[]) {
 
@@ -23,6 +29,9 @@ int main(int argc, char *argv[]) {
     //--- Interpreter start
     Interpreter *interpreter = calloc(1, sizeof(Interpreter));
     interpreter_init(interpreter);
+
+    RwnObj *f = create_builtin_func(interpreter, "print", print, NULL);
+    shput(interpreter->symbol_table, "print", f);
 
     RwnObj *result = interpreter_traverse(interpreter, root);
     char *result_repr = obj_get_repr(result);

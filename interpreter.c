@@ -29,6 +29,20 @@ RwnObj *create_bool_obj(Interpreter *interpreter, int val) {
     return res;
 }
 
+RwnObj *create_builtin_func(Interpreter *interpreter,
+                            char *funcname,
+                            RwnObj *(*func)(Interpreter *context,
+                                            RwnObj **args),
+                            RwnObj **args) {
+    RwnObj *res = calloc(1, sizeof(RwnObj));
+    res->data_type = DT_FUNC;
+    res->builtin_func = func;
+    res->is_builtin = 1;
+    res->funcname = funcname;
+    tracker_add_obj(interpreter, res);
+    return res;
+}
+
 RwnObj *create_str_obj(Interpreter *interpreter, char *val) {
     RwnObj *res = calloc(1, sizeof(RwnObj));
     res->strval = val;
@@ -64,29 +78,30 @@ RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node) {
 }
 
 RwnObj *visit(Interpreter *interpreter, AST *node) {
-    if (node->node_type == NT_INT)
-        return visit_int(interpreter, node);
-    else if (node->node_type == NT_FLOAT)
-        return visit_float(interpreter, node);
-    else if (node->node_type == NT_BIN_OP)
-        return visit_binop(interpreter, node);
-    else if (node->node_type == NT_STRING)
-        return visit_str(interpreter, node);
-    else if (node->node_type == NT_LIST)
-        return visit_list(interpreter, node);
-    else if (node->node_type == NT_IF)
-        return visit_if(interpreter, node);
-    else if (node->node_type == NT_VARACCESS)
-        return visit_varaccess(interpreter, node);
-    else if (node->node_type == NT_VARASSIGN)
-        return visit_varassign(interpreter, node);
-    else if (node->node_type == NT_FUNC_CALL)
-        return visit_funccall(interpreter, node);
-    else if (node->node_type == NT_FUNC_DEF)
-        return visit_funcdef(interpreter, node);
-    else {
-        printf("Interpreter error.\n");
-        exit(1);
+    switch (node->node_type) {
+        case NT_INT:
+            return visit_int(interpreter, node);
+        case NT_FLOAT:
+            return visit_float(interpreter, node);
+        case NT_BIN_OP:
+            return visit_binop(interpreter, node);
+        case NT_STRING:
+            return visit_str(interpreter, node);
+        case NT_LIST:
+            return visit_list(interpreter, node);
+        case NT_IF:
+            return visit_if(interpreter, node);
+        case NT_VARACCESS:
+            return visit_varaccess(interpreter, node);
+        case NT_VARASSIGN:
+            return visit_varassign(interpreter, node);
+        case NT_FUNC_DEF:
+            return visit_funcdef(interpreter, node);
+        case NT_FUNC_CALL:
+            return visit_funccall(interpreter, node);
+        default:
+            printf("Interpreter error.\n");
+            exit(1);
     }
 }
 
@@ -95,12 +110,19 @@ RwnObj *visit_float(Interpreter *interpreter, AST *node) {
 }
 
 RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
+    /* the varaccess node, i.e., the function */
     AST *node_to_call = node->fcall_node_to_call;
     RwnObj *value_to_call = visit(interpreter, node_to_call);
 
+    /* if the function is a built-in function, directly call it */
+    if (value_to_call->is_builtin && (value_to_call->builtin_func != NULL)) {
+        RwnObj *res = value_to_call->builtin_func(interpreter, NULL); // call
+        return res;
+    }
+
     /* This funcbody is a list of statements. Better iterate it
      * one by one to detect return statement. */
-    AST* funcbody = value_to_call->funcbody;
+    AST *funcbody = value_to_call->funcbody;
 
     Interpreter *local_itptr = calloc(1, sizeof(Interpreter));
     interpreter_init(local_itptr);
@@ -126,7 +148,7 @@ RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
 RwnObj *visit_funcdef(Interpreter *interpreter, AST *node) {
     char **argnames = NULL;
     for (int i = 0; i < arrlen(node->fn_arglist); ++i) {
-        arrpush(argnames, node->fn_arglist[i].txt);
+                arrpush(argnames, node->fn_arglist[i].txt);
     }
     RwnObj *res = create_func(interpreter, node->fn_name.txt, argnames, node->fn_body);
     shput(interpreter->symbol_table, node->fn_name.txt, res);

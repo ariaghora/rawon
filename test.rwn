@@ -1,5 +1,5 @@
-fn add(a, b) {
-    a + b
+fn foo(x) {
+
 }
 
-add(1, 2)
+print(123)

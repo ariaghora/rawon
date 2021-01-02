@@ -10,6 +10,8 @@ typedef enum {
     DT_FUNC
 } data_type_t;
 
+struct tInterpreter;
+
 typedef struct tRwnObj {
     int intval;
     float floatval;
@@ -25,6 +27,12 @@ typedef struct tRwnObj {
     char *funcname;
     char **funcargnames;
     AST *funcbody;
+
+    /* builtin func object properties */
+    int is_builtin;
+
+    struct tRwnObj *(*builtin_func)(struct tInterpreter *context,
+                                    struct tRwnObj **args);
 
     data_type_t data_type;
 } RwnObj;
@@ -55,19 +63,27 @@ RwnObj *create_number_obj(Interpreter *interpreter,
 
 RwnObj *create_bool_obj(Interpreter *interpreter, int val);
 
+RwnObj *create_builtin_func(Interpreter *interpreter,
+                            char *funcname,
+                            RwnObj *(*func)(Interpreter *context,
+                                           RwnObj **args),
+                            RwnObj **args);
+
 RwnObj *create_str_obj(Interpreter *interpreter, char *val);
 
 RwnObj *create_null_obj(Interpreter *interpreter);
 
 RwnObj *create_func(Interpreter *interpreter, char *name,
                     char **argnames,
-                    AST* body);
+                    AST *body);
 
 RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node);
 
 RwnObj *visit(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_binop(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_builtin_funccall(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_float(Interpreter *interpreter, AST *node);
 
