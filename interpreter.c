@@ -109,14 +109,43 @@ RwnObj *visit_float(Interpreter *interpreter, AST *node) {
     return create_number_obj(interpreter, node->floatval, TK_FLOAT);
 }
 
+RwnObj *get_var_by_name(Interpreter *context, char *varname) {
+    RwnObj *res = shget(context->symbol_table, varname);
+    if (context->parent != NULL && (res == NULL)) {
+        res = get_var_by_name(context->parent, varname);
+    }
+    return res;
+}
+
 RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
     /* the varaccess node, i.e., the function */
     AST *node_to_call = node->fcall_node_to_call;
+
+    Interpreter *local_itptr = calloc(1, sizeof(Interpreter));
+    interpreter_init(local_itptr);
+    local_itptr->parent = interpreter;
+
     RwnObj *value_to_call = visit(interpreter, node_to_call);
+    RwnObj **params = NULL;
+
+    for (int i = 0; i < arrlen(node->fcall_arglsit); ++i) {
+        /* actual params */
+        RwnObj *param = visit(interpreter, node->fcall_arglsit[i]);
+                arrpush(params, param);
+
+        /* store param in function's local symbol table */
+        if (value_to_call->funcargnames != NULL) {
+            shput(local_itptr->symbol_table,
+                  value_to_call->funcargnames[i],
+                  param);
+        }
+    }
 
     /* if the function is a built-in function, directly call it */
     if (value_to_call->is_builtin && (value_to_call->builtin_func != NULL)) {
-        RwnObj *res = value_to_call->builtin_func(interpreter, NULL); // call
+        RwnObj *res = value_to_call->builtin_func(interpreter, params); // call
+                arrfree(params);
+        interpreter_cleanup(local_itptr);
         return res;
     }
 
@@ -124,24 +153,14 @@ RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
      * one by one to detect return statement. */
     AST *funcbody = value_to_call->funcbody;
 
-    Interpreter *local_itptr = calloc(1, sizeof(Interpreter));
-    interpreter_init(local_itptr);
-    local_itptr->parent = interpreter;
-
-    for (int i = 0; i < arrlen(node->fcall_arglsit); ++i) {
-        /* actual params */
-        RwnObj *param = visit(interpreter, node->fcall_arglsit[i]);
-
-        /* store param in function's local symbol table */
-        shput(local_itptr->symbol_table,
-              value_to_call->funcargnames[i],
-              param);
-    }
 
     /* All the local variables set-up, we are ready to interpret function's
      * body */
-    RwnObj *func_body = visit(local_itptr, funcbody);
-    printf("%s\n", obj_get_repr(func_body));
+
+    visit(local_itptr, funcbody);
+    arrfree(params);
+    interpreter_cleanup(local_itptr);
+
     return create_null_obj(interpreter);
 }
 
@@ -219,7 +238,7 @@ RwnObj *visit_list(Interpreter *interpreter, AST *node) {
 }
 
 RwnObj *visit_varaccess(Interpreter *interpreter, AST *node) {
-    RwnObj *res = shget(interpreter->symbol_table, node->var_token.txt);
+    RwnObj *res = get_var_by_name(interpreter, node->var_token.txt);
     if (res == NULL) {
         printf("Error: Identifier `%s` not found.\n", node->var_token.txt);
         exit(1);
@@ -257,9 +276,9 @@ char *obj_get_repr(RwnObj *obj) {
     } else if (obj->data_type == DT_STR) {
         len = obj->strvallen + 2;
         res = calloc(len + 1, sizeof(char));
-        strcpy(res, "'");
+//        strcpy(res, "'");
         strcat(res, obj->strval);
-        strcat(res, "'");
+//        strcat(res, "'");
     } else if (obj->data_type == DT_LIST) {
         res = (char *) calloc(2, sizeof(char));
         strcat(res, "[");

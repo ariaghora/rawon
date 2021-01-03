@@ -77,6 +77,8 @@ RwnObj *create_func(Interpreter *interpreter, char *name,
                     char **argnames,
                     AST *body);
 
+RwnObj *get_var_by_name(Interpreter *context, char *varname);
+
 RwnObj *interpreter_traverse(Interpreter *interpreter, AST *node);
 
 RwnObj *visit(Interpreter *interpreter, AST *node);

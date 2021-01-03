@@ -44,8 +44,25 @@ Token make_string(Lexer *lexer, char delim) {
 
     int i = 0;
     while (lexer->c != delim) {
-        s[i++] = lexer->c;
-        lexer_advance(lexer);
+        /* capture escape sequence */
+        if (lexer->c == '\\') {
+            lexer_advance(lexer);
+            switch (lexer->c) {
+                case 't':
+                    s[i++] = '\t';
+                    break;
+                case 'n':
+                    s[i++] = '\n';
+                    break;
+                case 'r':
+                    s[i++] = '\r';
+                    break;
+            }
+            lexer_advance(lexer);
+        } else {
+            s[i++] = lexer->c;
+            lexer_advance(lexer);
+        }
     }
     s[i] = '\0';
 

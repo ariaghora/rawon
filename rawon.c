@@ -9,7 +9,9 @@
 #include "interpreter.h"
 
 RwnObj *print(Interpreter *context, RwnObj **args) {
-    printf("hey...\n");
+    for (int i = 0; i < arrlen(args); ++i) {
+        printf("%s", obj_get_repr(args[i]));
+    }
     return create_null_obj(context);
 }
 
@@ -35,8 +37,6 @@ int main(int argc, char *argv[]) {
 
     RwnObj *result = interpreter_traverse(interpreter, root);
     char *result_repr = obj_get_repr(result);
-
-    printf("Output >> %s\n", result_repr);
 
     interpreter_cleanup(interpreter);
     //--- Interpreter end

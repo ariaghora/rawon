@@ -1,5 +1,10 @@
-fn foo(x) {
-
+fn hello(x) {
+    print('Hello ', x, '!\n')
 }
 
-print(123)
+hello("Sorciencer")
+
+word = "Hello"
+print(word * 3, '\n')
+
+print(1 + 2 * 3, '\n')

@@ -258,10 +258,10 @@ AST *parse_call(Parser *parser) {
         if (parser->current.kind == TK_RPAREN) {
             parser_advance(parser);
         } else {
-            arrpush(arglist, parse_expr(parser));
-            while (parser->current.kind==TK_COMMA) {
+                    arrpush(arglist, parse_expr(parser));
+            while (parser->current.kind == TK_COMMA) {
                 parser_advance(parser);
-                arrpush(arglist, parse_expr(parser));
+                        arrpush(arglist, parse_expr(parser));
             }
 
             expect(TK_RPAREN, parser->current, ")");
@@ -326,11 +326,13 @@ AST *parse_funcdef(Parser *parser) {
     /* Do the function have arguments? If so, store them in a
      * list of argument.
      * */
-    if (parser->current.kind == TK_RPAREN)
+    if (parser->current.kind == TK_RPAREN) {
         parser_advance(parser);
-    else if (parser->current.kind == TK_ID) {
-                arrput(arglist, parser->current);
+        parser_skip_newline(parser);
+    } else if (parser->current.kind == TK_ID) {
+        arrput(arglist, parser->current);
         parser_advance(parser);
+
         while (parser->current.kind == TK_COMMA) {
             parser_advance(parser);
             expect(TK_ID, parser->current, "identifier");
@@ -339,13 +341,13 @@ AST *parse_funcdef(Parser *parser) {
         }
 
         expect(TK_RPAREN, parser->current, ")");
+        parser_advance(parser);
+        parser_skip_newline(parser);
     } else {
         printf("Expected `)` or `identifier`.");
         exit(1);
     }
 
-    parser_advance(parser);
-    parser_skip_newline(parser);
     expect(TK_LBRACE, parser->current, "{");
     parser_advance(parser);
     parser_skip_newline(parser);
