@@ -1,1 +1,1 @@
-A port of rawon-lang in C.
+RawOn programming language
