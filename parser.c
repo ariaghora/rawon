@@ -143,7 +143,9 @@ AST *parser_parse(Parser *parser) {
 AST *parse_arith(Parser *parser) {
     AST *left = parse_term(parser);
 
-    while (parser->current.kind == TK_PLUS || parser->current.kind == TK_MINUS) {
+    while (parser->current.kind == TK_PLUS ||
+           parser->current.kind == TK_MINUS ||
+           parser->current.kind == TK_PIPE) {
         Token op = parser->current;
         parser_advance(parser);
         AST *right = parse_term(parser);

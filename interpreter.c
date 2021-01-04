@@ -240,6 +240,8 @@ RwnObj *visit_binop(Interpreter *interpreter, AST *node) {
         res = op_ee(interpreter, left, right);
     } else if (op.kind == TK_LT) {
         res = op_lt(interpreter, left, right);
+    } else if (op.kind == TK_PIPE) {
+        res = op_pipe(interpreter, left, right);
     }
 
     return res;

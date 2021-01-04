@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "3rd_party/stb_ds.h"
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
@@ -184,4 +185,33 @@ RwnObj *op_lt(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
     }
 
     return create_null_obj(interpreter);
+}
+
+RwnObj *op_pipe(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
+    if (b->data_type != DT_FUNC)
+        rt_error("Can only pipe to a function.");
+
+    RwnObj **params = NULL;
+    arrpush(params, a);
+    if (b->is_builtin) {
+        RwnObj *res = b->builtin_func(interpreter, params);
+        arrfree(params);
+        return res;
+    }
+
+    /* process extra argument */
+    /*:-- */
+
+//    for (int i = 0; i < arrlen(node->fcall_arglsit); ++i) {
+//        /* actual params */
+//        RwnObj *param = visit(interpreter, node->fcall_arglsit[i]);
+//                arrpush(params, param);
+//
+//        /* store param in function's local symbol table */
+//        if (value_to_call->funcargnames != NULL) {
+//            shput(local_itptr->symbol_table,
+//                  value_to_call->funcargnames[i],
+//                  param);
+//        }
+//    }
 }

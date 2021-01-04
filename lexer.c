@@ -173,11 +173,15 @@ void lexer_lex(Lexer *lexer) {
                  */
                 lexer_add_token(lexer, create_token(TK_EQ, "="));
             }
-        }
-        else if (lexer->c == '<')
+        } else if (lexer->c == '<')
             lexer_add_token(lexer, create_token(TK_LT, "<"));
 
-        else if (lexer->c == '(')
+        else if (lexer->c == '>') {
+            if (lexer_peek(lexer, 1) == '>') {
+                lexer_add_token_n_char(lexer, create_token(TK_PIPE, ">>"), 2);
+            } else
+                lexer_add_token(lexer, create_token(TK_GT, ">"));
+        } else if (lexer->c == '(')
             lexer_add_token(lexer, create_token(TK_LPAREN, "("));
         else if (lexer->c == ')')
             lexer_add_token(lexer, create_token(TK_RPAREN, ")"));

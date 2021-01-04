@@ -15,4 +15,6 @@ RwnObj *op_ee(Interpreter *interpreter, RwnObj *a, RwnObj *b);
 
 RwnObj *op_lt(Interpreter *interpreter, RwnObj *a, RwnObj *b);
 
+RwnObj *op_pipe(Interpreter *interpreter, RwnObj *a, RwnObj *b);
+
 #endif //CRAWON_OPS_H
