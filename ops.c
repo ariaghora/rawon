@@ -6,6 +6,11 @@
 #include "interpreter.h"
 #include "ops.h"
 
+void rt_error(char *msg) {
+    printf("Run-time error: %s\n", msg);
+    exit(1);
+}
+
 RwnObj *op_add(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
     if (a->data_type == DT_INT && b->data_type == DT_INT) {
         /* case 1: both operands are int */
@@ -22,12 +27,22 @@ RwnObj *op_add(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
         return create_number_obj(interpreter,
                                  a->intval + b->floatval,
                                  DT_FLOAT);
-    } else {
+    } else if (a->data_type == DT_FLOAT && b->data_type == DT_INT) {
         /* same. */
         return create_number_obj(interpreter,
                                  a->floatval + b->intval,
                                  DT_FLOAT);
+    } else {
+        char *msg = malloc(255);
+        sprintf(msg,
+                "Operator * is not defined for `%s` and `%s` data types.",
+                obj_typestr(a),
+                obj_typestr(b));
+
+        rt_error(msg);
     }
+
+    return create_null_obj(interpreter);
 }
 
 RwnObj *op_sub(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
@@ -43,18 +58,24 @@ RwnObj *op_sub(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
         return create_number_obj(interpreter,
                                  a->intval - b->floatval,
                                  DT_FLOAT);
-    } else {
+    } else if (a->data_type == DT_FLOAT && b->data_type == DT_INT) {
         /* same. */
         return create_number_obj(interpreter,
                                  a->floatval - b->intval,
                                  DT_FLOAT);
+    } else {
+        char *msg = malloc(255);
+        sprintf(msg,
+                "Operator * is not defined for `%s` and `%s` data types.",
+                obj_typestr(a),
+                obj_typestr(b));
+
+        rt_error(msg);
     }
+
+    return create_null_obj(interpreter);
 }
 
-void rt_error(char *msg) {
-    printf("Run-time error: %s\n", msg);
-    exit(1);
-}
 
 RwnObj *op_mul(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
     if (a->data_type == DT_INT && b->data_type == DT_INT) {
@@ -70,7 +91,6 @@ RwnObj *op_mul(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
                                  (float) a->intval * b->floatval,
                                  DT_FLOAT);
     } else if (a->data_type == DT_FLOAT && b->data_type == DT_INT) {
-
         return create_number_obj(interpreter,
                                  a->floatval * (float) b->intval,
                                  DT_FLOAT);
@@ -93,7 +113,7 @@ RwnObj *op_mul(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
          * String multiplication, reversed order
          */
         return op_mul(interpreter, b, a);
-    }else {
+    } else {
         char *msg = malloc(255);
         sprintf(msg,
                 "Operator * is not defined for `%s` and `%s` data types.",
@@ -136,6 +156,8 @@ RwnObj *op_gt(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
         return create_bool_obj(interpreter,
                                a->floatval > b->intval);
     }
+
+    return create_null_obj(interpreter);
 }
 
 RwnObj *op_lt(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
@@ -148,8 +170,18 @@ RwnObj *op_lt(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
     } else if (a->data_type == DT_INT && b->data_type == DT_FLOAT) {
         return create_bool_obj(interpreter,
                                a->intval < b->floatval);
-    } else {
+    } else if (a->data_type == DT_FLOAT && b->data_type == DT_INT) {
         return create_bool_obj(interpreter,
                                a->floatval < b->intval);
+    } else {
+        char *msg = malloc(255);
+        sprintf(msg,
+                "Operator * is not defined for `%s` and `%s` data types.",
+                obj_typestr(a),
+                obj_typestr(b));
+
+        rt_error(msg);
     }
+
+    return create_null_obj(interpreter);
 }

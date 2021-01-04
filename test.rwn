@@ -6,5 +6,7 @@ fn fibo(x) {
     }
 }
 
-n = 6
+print('Enter n: ')
+n = toint(input())
+
 print(n, "-th fibonacci number: ", fibo(n), "\n")

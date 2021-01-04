@@ -170,32 +170,20 @@ RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
     for (int i = 0; i < funcbody->node_list_cnt; ++i) {
         visit(local_itptr, funcbody->node_list[i]);
         if (local_itptr->should_return) {
-//            printf("return %s\n", obj_get_repr(shget(local_itptr->symbol_table, "$ret")));
-            return get_var_by_name(local_itptr, "$ret");
+            /* make a copy of the returned value, so it is not immediately
+             * freed after execution.
+             */
+            RwnObj *retval = calloc(1, sizeof(RwnObj));
+            tracker_add_obj(interpreter, retval);
+            memcpy(retval, get_var_by_name(local_itptr, "$ret"), sizeof(RwnObj));
+
+            interpreter_cleanup(local_itptr);
+                    arrfree(params);
+            return retval;
         }
-//        if ()
-//        if (funcbody->node_list[i]->node_type == NT_RETURN_NODE) {
-//            /* if return node is found, immediately return  */
-//            RwnObj *stmt = visit(local_itptr,
-//                                 funcbody->node_list[i]->returned_node);
-//
-//            /* make a copy of the returned value, so it is not immediately
-//             * freed after execution.
-//             */
-//            RwnObj *retval = calloc(1, sizeof(RwnObj));
-//            tracker_add_obj(interpreter, retval);
-//            memcpy(retval, stmt, sizeof(RwnObj));
-//
-//            interpreter_cleanup(local_itptr);
-//                    arrfree(params);
-//            return retval;
-//        } else {
-//            /* otherwise, just execute the statement */
-//            visit(local_itptr, funcbody->node_list[i]);
-//        }
     }
 
-//    interpreter_cleanup(local_itptr);
+    interpreter_cleanup(local_itptr);
     return create_null_obj(interpreter);
 }
 
