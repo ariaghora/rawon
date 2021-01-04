@@ -95,6 +95,13 @@ AST *create_funcdef_node(Token name, Token *arglist, AST *body) {
     return funcdef_node;
 }
 
+AST *create_return_node(AST *returned_node) {
+    AST *return_node = calloc(1, sizeof(AST));
+    return_node->node_type = NT_RETURN_NODE;
+    return_node->returned_node = returned_node;
+    return return_node;
+}
+
 AST *create_list_node(AST **node_list, int node_list_cnt) {
     AST *list_node = calloc(1, sizeof(AST));
     list_node->node_type = NT_LIST;
@@ -195,6 +202,10 @@ AST *parse_atom(Parser *parser) {
         return parse_if_expr(parser);
     } else if (is_keyword(tok, "fn")) {
         return parse_funcdef(parser);
+    } else if (is_keyword(tok, "return")) {
+        parser_advance(parser);
+        AST *returned_node = parse_expr(parser);
+        return create_return_node(returned_node);
     }
 
     return NULL;
@@ -287,7 +298,8 @@ AST *parse_comp_expr(Parser *parser) {
     /*
      * Parse ==, >, >=, etc
      */
-    while (parser->current.kind == TK_EE) {
+    while (parser->current.kind == TK_EE ||
+           parser->current.kind == TK_LT) {
         Token op = parser->current;
         parser_advance(parser);
         AST *right = parse_arith(parser);
@@ -330,7 +342,7 @@ AST *parse_funcdef(Parser *parser) {
         parser_advance(parser);
         parser_skip_newline(parser);
     } else if (parser->current.kind == TK_ID) {
-        arrput(arglist, parser->current);
+                arrput(arglist, parser->current);
         parser_advance(parser);
 
         while (parser->current.kind == TK_COMMA) {
@@ -361,7 +373,7 @@ AST *parse_funcdef(Parser *parser) {
     }
 
     /* Finally, we expect closing brace. */
-    expect(TK_RBRACE, parser->current, "}");
+    expect(TK_RBRACE, parser->current, "} (function definition)");
     parser_advance(parser);
     return create_funcdef_node(func_name, arglist, body);
 }
@@ -390,6 +402,7 @@ AST *parse_if_expr(Parser *parser) {
     parser_advance(parser);
     parser_skip_newline(parser);
 
+
     /* Prepare the list to hold all possible cases */
     NodeList *cases = calloc(1, sizeof(NodeList));;
     node_list_init(cases);
@@ -399,11 +412,13 @@ AST *parse_if_expr(Parser *parser) {
     if (parser->current.kind != TK_RBRACE) {
         /* Add the first case to the case list */
         block = parse_block(parser);
-        if (block != NULL)
+        if (block != NULL) {
             node_list_push(cases, block);
+        }
+    } else if (parser->current.kind == TK_RBRACE) {
+        expect(TK_RBRACE, parser->current, "} (if expr)");
+        parser_advance(parser);
     }
-
-    expect(TK_RBRACE, parser->current, "}");
     parser_advance(parser);
     parser_skip_newline(parser);
 
@@ -426,7 +441,7 @@ AST *parse_if_expr(Parser *parser) {
         node_list_push(conditions, condition);
         node_list_push(cases, block);
 
-        expect(TK_RBRACE, parser->current, "}");
+        expect(TK_RBRACE, parser->current, "} (elif if expr)");
         parser_advance(parser);
         parser_skip_newline(parser);
     }
@@ -445,7 +460,7 @@ AST *parse_if_expr(Parser *parser) {
 
         else_case = parse_block(parser);
 
-        expect(TK_RBRACE, parser->current, "}");
+        expect(TK_RBRACE, parser->current, "} (else expr)");
         parser_advance(parser);
     }
 

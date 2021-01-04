@@ -1,1 +1,1 @@
-gcc -g -Wall ./*.c ./3rd_party/*.h -o "./rawon.exe"
+gcc -g -Wall ./*.c ./*/*.c ./3rd_party/*.h -o "./rawon.exe"

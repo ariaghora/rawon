@@ -1,9 +1,10 @@
 #ifndef CRAWON_INTERPRETER_H
 #define CRAWON_INTERPRETER_H
 
-#define MAX_RWN_OBJ 10000
-
 #include "3rd_party/stb_ds.h"
+
+#define MAX_RWN_OBJ 10000
+#define RwnNull(ctx) create_null_obj(context)
 
 typedef enum {
     DT_INT, DT_FLOAT, DT_BOOL, DT_STR, DT_NULL, DT_LIST,
@@ -55,6 +56,9 @@ typedef struct tInterpreter {
     /* To track the created objects */
     RwnObjectTracker *tracker;
     int obj_cnt;
+
+    /* Indicating if current context should return  */
+    int should_return;
 } Interpreter;
 
 RwnObj *create_number_obj(Interpreter *interpreter,
@@ -66,7 +70,7 @@ RwnObj *create_bool_obj(Interpreter *interpreter, int val);
 RwnObj *create_builtin_func(Interpreter *interpreter,
                             char *funcname,
                             RwnObj *(*func)(Interpreter *context,
-                                           RwnObj **args),
+                                            RwnObj **args),
                             RwnObj **args);
 
 RwnObj *create_str_obj(Interpreter *interpreter, char *val);
@@ -92,6 +96,8 @@ RwnObj *visit_float(Interpreter *interpreter, AST *node);
 RwnObj *visit_funccall(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_funcdef(Interpreter *interpreter, AST *node);
+
+RwnObj *visit_return(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_list(Interpreter *interpreter, AST *node);
 
@@ -120,6 +126,11 @@ void free_rwn_obj(RwnObj *obj);
 void interpreter_cleanup(Interpreter *interpreter);
 
 void free_AST(AST *node);
+
+void register_builtin_func(Interpreter *context,
+                           char *funcname,
+                           RwnObj *(*func)(Interpreter *context,
+                                           RwnObj **args));
 
 
 #endif //CRAWON_INTERPRETER_H

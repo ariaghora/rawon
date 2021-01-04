@@ -99,7 +99,10 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
             return visit_funcdef(interpreter, node);
         case NT_FUNC_CALL:
             return visit_funccall(interpreter, node);
+        case NT_RETURN_NODE:
+            return visit_return(interpreter, node);
         default:
+            printf("%d\n", node->node_type);
             printf("Interpreter error.\n");
             exit(1);
     }
@@ -115,6 +118,14 @@ RwnObj *get_var_by_name(Interpreter *context, char *varname) {
         res = get_var_by_name(context->parent, varname);
     }
     return res;
+}
+
+RwnObj *visit_return(Interpreter *interpreter, AST *node) {
+    if (node->returned_node != NULL) {
+        shput(interpreter->symbol_table, "$ret", visit(interpreter, node->returned_node));
+        interpreter->should_return = 1;
+    }
+    return create_null_obj(interpreter);
 }
 
 RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
@@ -153,14 +164,38 @@ RwnObj *visit_funccall(Interpreter *interpreter, AST *node) {
      * one by one to detect return statement. */
     AST *funcbody = value_to_call->funcbody;
 
+    /* the funcbody is always a list node, so we can iterate over node_list
+     * property
+     */
+    for (int i = 0; i < funcbody->node_list_cnt; ++i) {
+        visit(local_itptr, funcbody->node_list[i]);
+        if (local_itptr->should_return) {
+//            printf("return %s\n", obj_get_repr(shget(local_itptr->symbol_table, "$ret")));
+            return get_var_by_name(local_itptr, "$ret");
+        }
+//        if ()
+//        if (funcbody->node_list[i]->node_type == NT_RETURN_NODE) {
+//            /* if return node is found, immediately return  */
+//            RwnObj *stmt = visit(local_itptr,
+//                                 funcbody->node_list[i]->returned_node);
+//
+//            /* make a copy of the returned value, so it is not immediately
+//             * freed after execution.
+//             */
+//            RwnObj *retval = calloc(1, sizeof(RwnObj));
+//            tracker_add_obj(interpreter, retval);
+//            memcpy(retval, stmt, sizeof(RwnObj));
+//
+//            interpreter_cleanup(local_itptr);
+//                    arrfree(params);
+//            return retval;
+//        } else {
+//            /* otherwise, just execute the statement */
+//            visit(local_itptr, funcbody->node_list[i]);
+//        }
+    }
 
-    /* All the local variables set-up, we are ready to interpret function's
-     * body */
-
-    visit(local_itptr, funcbody);
-    arrfree(params);
-    interpreter_cleanup(local_itptr);
-
+//    interpreter_cleanup(local_itptr);
     return create_null_obj(interpreter);
 }
 
@@ -177,15 +212,19 @@ RwnObj *visit_funcdef(Interpreter *interpreter, AST *node) {
 
 RwnObj *visit_if(Interpreter *interpreter, AST *node) {
     for (int i = 0; i < node->conditions_cnt; ++i) {
-        if (node->if_conditions[i]->intval) {
-            visit(interpreter, node->if_cases[i]);
+        RwnObj *truthval = visit(interpreter, node->if_conditions[i]);
+        if (truthval->intval == 1) {
+            if (node->if_cases[i] != NULL)
+                visit(interpreter, node->if_cases[i]);
             break;
+        }
+
+        if ((i == node->conditions_cnt - 1) && node->else_case != NULL) {
+            visit(interpreter, node->else_case);
         }
     }
 
-    if (node->else_case != NULL) {
-        visit(interpreter, node->else_case);
-    }
+
     return create_null_obj(interpreter);
 }
 
@@ -211,6 +250,8 @@ RwnObj *visit_binop(Interpreter *interpreter, AST *node) {
         res = op_mul(interpreter, left, right);
     } else if (op.kind == TK_EE) {
         res = op_ee(interpreter, left, right);
+    } else if (op.kind == TK_LT) {
+        res = op_lt(interpreter, left, right);
     }
 
     return res;
@@ -232,6 +273,10 @@ RwnObj *visit_list(Interpreter *interpreter, AST *node) {
         /*/
         RwnObj *item = visit(interpreter, node->node_list[i]);
         rwn_list_obj->obj_list[i] = item;
+
+        /* if the recently visited node is the return node, then break */
+        if (node->node_list[i]->node_type == NT_RETURN_NODE)
+            break;
     }
 
     return rwn_list_obj;
@@ -274,7 +319,7 @@ char *obj_get_repr(RwnObj *obj) {
         res = calloc(strlen(nullstr) + 1, sizeof(char));
         strcpy(res, nullstr);
     } else if (obj->data_type == DT_STR) {
-        len = obj->strvallen + 2;
+        len = obj->strvallen;
         res = calloc(len + 1, sizeof(char));
 //        strcpy(res, "'");
         strcat(res, obj->strval);
@@ -447,6 +492,13 @@ void free_AST(AST *node) {
             free_AST(node->fcall_node_to_call);
     }
 
+    /* return node cleanup */
+    if (node->node_type == NT_RETURN_NODE) {
+        if (node->returned_node != NULL) {
+            free_AST(node->returned_node);
+        }
+    }
+
     /* Cleaning items if it is a `list` AST node */
     if (node->node_list_cnt > 0) {
         for (int i = 0; i < node->node_list_cnt; ++i) {
@@ -457,4 +509,12 @@ void free_AST(AST *node) {
     }
 
     free(node);
+}
+
+void register_builtin_func(Interpreter *context,
+                           char *funcname,
+                           RwnObj *(*func)(Interpreter *context,
+                                           RwnObj **args)) {
+    RwnObj *f = create_builtin_func(context, funcname, func, NULL);
+    shput(context->symbol_table, funcname, f);
 }

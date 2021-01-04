@@ -7,13 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
-
-RwnObj *print(Interpreter *context, RwnObj **args) {
-    for (int i = 0; i < arrlen(args); ++i) {
-        printf("%s", obj_get_repr(args[i]));
-    }
-    return create_null_obj(context);
-}
+#include "builtinfunc.h"
 
 int main(int argc, char *argv[]) {
 
@@ -31,12 +25,11 @@ int main(int argc, char *argv[]) {
     //--- Interpreter start
     Interpreter *interpreter = calloc(1, sizeof(Interpreter));
     interpreter_init(interpreter);
-
-    RwnObj *f = create_builtin_func(interpreter, "print", print, NULL);
-    shput(interpreter->symbol_table, "print", f);
+    init_builtin_funcs(interpreter);
 
     RwnObj *result = interpreter_traverse(interpreter, root);
     char *result_repr = obj_get_repr(result);
+    // printf("\n\n%s\n", result_repr);
 
     interpreter_cleanup(interpreter);
     //--- Interpreter end

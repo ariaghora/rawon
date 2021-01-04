@@ -86,7 +86,8 @@ Token make_id_or_keyword(Lexer *lexer) {
         strcmp(s, "elif") == 0 ||
         strcmp(s, "else") == 0 ||
         strcmp(s, "for") == 0 ||
-        strcmp(s, "fn") == 0) {
+        strcmp(s, "fn") == 0 ||
+        strcmp(s, "return") == 0) {
         return create_token(TK_KEYWORD, s);
     }
 
@@ -172,7 +173,11 @@ void lexer_lex(Lexer *lexer) {
                  */
                 lexer_add_token(lexer, create_token(TK_EQ, "="));
             }
-        } else if (lexer->c == '(')
+        }
+        else if (lexer->c == '<')
+            lexer_add_token(lexer, create_token(TK_LT, "<"));
+
+        else if (lexer->c == '(')
             lexer_add_token(lexer, create_token(TK_LPAREN, "("));
         else if (lexer->c == ')')
             lexer_add_token(lexer, create_token(TK_RPAREN, ")"));

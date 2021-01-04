@@ -9,6 +9,7 @@ typedef enum {
     NT_FUNC_DEF,
     NT_FUNC_CALL,
     NT_BUILTIN_FUNC_CALL, /* distinction from run-time created function */
+    NT_RETURN_NODE,
     NT_VARACCESS, NT_VARASSIGN,
 } node_type_t;
 
@@ -54,6 +55,9 @@ typedef struct tAST {
      */
     struct tAST **fcall_arglsit;
     struct tAST *fcall_node_to_call;
+
+    /* A return node containing the returned node */
+    struct tAST *returned_node;
 
 } AST;
 

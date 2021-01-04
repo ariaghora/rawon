@@ -13,7 +13,7 @@ typedef enum {
     TK_PLUS, TK_MINUS, TK_MULT, TK_DIV,
 
     /* Logical op tokens */
-    TK_EE,
+    TK_EE, TK_LT,
 
     /* Delimiters */
     TK_LPAREN, TK_RPAREN,

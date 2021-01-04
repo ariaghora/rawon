@@ -1,10 +1,10 @@
-fn hello(x) {
-    print('Hello ', x, '!\n')
+fn fibo(x) {
+    if (x < 2) {
+        return x
+    } else {
+        return fibo(x - 2) + fibo(x - 1)
+    }
 }
 
-hello("Sorciencer")
-
-word = "Hello"
-print(word * 3, '\n')
-
-print(1 + 2 * 3, '\n')
+n = 6
+print(n, "-th fibonacci number: ", fibo(n), "\n")
