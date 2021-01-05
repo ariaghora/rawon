@@ -1,2 +1,14 @@
 list = [1, 2, "hello"]
-print(list[2])
+
+print(list, '\n')
+print(list[2], '\n')
+
+str = "hello cruel world"
+strlist = split(str, " ")
+
+print(strlist, '\n');
+
+str = "081-123-4567-888"
+strlist = split(str, "-")
+
+print(strlist, '\n');

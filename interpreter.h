@@ -134,5 +134,8 @@ void register_builtin_func(Interpreter *context,
                            RwnObj *(*func)(Interpreter *context,
                                            RwnObj **args));
 
+void ensure_n_params(char *funcname, int expected, int got);
+
+void rt_error(char *msg);
 
 #endif //CRAWON_INTERPRETER_H

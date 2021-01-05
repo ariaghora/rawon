@@ -2,16 +2,6 @@
 #include <errno.h>
 #include "console.h"
 
-void ensure_n_params(char *funcname, int expected, int got) {
-    if (got != expected) {
-        printf("Error: Function `%s` accepts %d parameters, but %d given.\n",
-               funcname,
-               expected,
-               got);
-        exit(1);
-    }
-}
-
 RwnObj *rwn_input(Interpreter *context, RwnObj **args) {
     ensure_n_params("input", 0, arrlen(args));
     size_t len = 0;

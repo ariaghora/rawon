@@ -425,7 +425,8 @@ void interpreter_cleanup(Interpreter *interpreter) {
          * its obj_list.
          */
         if (interpreter->tracker->objs[i]->obj_list_cnt > 0) {
-            free(interpreter->tracker->objs[i]->obj_list);
+            if (interpreter->tracker->objs[i]->obj_list != NULL)
+                free(interpreter->tracker->objs[i]->obj_list);
         }
 
         /* in case the string object's string value is not freed, free it */
@@ -547,4 +548,19 @@ void register_builtin_func(Interpreter *context,
                                            RwnObj **args)) {
     RwnObj *f = create_builtin_func(context, funcname, func, NULL);
     shput(context->symbol_table, funcname, f);
+}
+
+void ensure_n_params(char *funcname, int expected, int got) {
+    if (got != expected) {
+        printf("Error: Function `%s` accepts %d parameters, but %d given.\n",
+               funcname,
+               expected,
+               got);
+        exit(1);
+    }
+}
+
+void rt_error(char *msg) {
+    printf("Run-time error: %s\n", msg);
+    exit(1);
 }

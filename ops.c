@@ -7,11 +7,6 @@
 #include "interpreter.h"
 #include "ops.h"
 
-void rt_error(char *msg) {
-    printf("Run-time error: %s\n", msg);
-    exit(1);
-}
-
 RwnObj *op_add(Interpreter *interpreter, RwnObj *a, RwnObj *b) {
     if (a->data_type == DT_INT && b->data_type == DT_INT) {
         /* case 1: both operands are int */
