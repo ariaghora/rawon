@@ -13,8 +13,10 @@ fn fibo(x) {
 
 print('Enter n: ')
 
-// equivalent to toint(input())
 n = input() >> toint 
+
+// equivalent to:
+// n = toint(input())
 
 print(n, "-th fibonacci number: ", fibo(n), "\n")
 ```
