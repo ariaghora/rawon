@@ -11,6 +11,7 @@ typedef enum {
     NT_BUILTIN_FUNC_CALL, /* distinction from run-time created function */
     NT_RETURN_NODE,
     NT_VARACCESS, NT_VARASSIGN,
+    NT_SUBSCRIPT
 } node_type_t;
 
 typedef struct tAST {
@@ -59,6 +60,9 @@ typedef struct tAST {
     /* A return node containing the returned node */
     struct tAST *returned_node;
 
+    /* A subscript node, e.g., list access: list[i] */
+    struct tAST *subscripted_node;
+    struct tAST *subscript_expr;
 } AST;
 
 typedef struct {
@@ -106,6 +110,8 @@ AST *create_if_node(AST **conditions, AST **cases, AST *else_case,
 AST *create_varaccess_node(Token var_token);
 
 AST *create_varassign_node(Token var_token, AST *node);
+
+AST *create_subscript_node(AST *node, AST *subscript_expr);
 
 /*
  * Parsing functions

@@ -101,6 +101,8 @@ RwnObj *visit(Interpreter *interpreter, AST *node) {
             return visit_funccall(interpreter, node);
         case NT_RETURN_NODE:
             return visit_return(interpreter, node);
+        case NT_SUBSCRIPT:
+            return visit_subscript(interpreter, node);
         default:
             printf("%d\n", node->node_type);
             printf("Interpreter error.\n");
@@ -285,6 +287,34 @@ RwnObj *visit_varassign(Interpreter *interpreter, AST *node) {
     RwnObj *res = visit(interpreter, node->var_node);
     shput(interpreter->symbol_table, node->var_token.txt, res);
     return res;
+}
+
+RwnObj *visit_subscript(Interpreter *interpreter, AST *node) {
+    AST *subscripted = node->subscripted_node;
+    RwnObj *subscripted_eval = visit(interpreter, subscripted);
+
+    /* resctrict subscription only to list/string */
+    if (subscripted_eval->data_type != DT_LIST &&
+        subscripted_eval->data_type != DT_STR) {
+        printf("Error: Cannot subscript `%d`.\n",
+               subscripted->node_type);
+        exit(1);
+    }
+
+    AST *subscript_expr = node->subscript_expr;
+    RwnObj *subscript_expr_eval = visit(interpreter, subscript_expr);
+    if (subscript_expr_eval->data_type != DT_INT) {
+        printf("Error: Can only subscript with integer expression.\n");
+        exit(1);
+    }
+
+    if (subscript_expr_eval->intval < 0 ||
+        subscript_expr_eval->intval > subscripted_eval->obj_list_cnt - 1) {
+        printf("Error: Index out of bound.\n");
+        exit(1);
+    }
+
+    return subscripted_eval->obj_list[subscript_expr_eval->intval];
 }
 
 char *obj_get_repr(RwnObj *obj) {
@@ -496,6 +526,16 @@ void free_AST(AST *node) {
         }
         if (node->node_list != NULL)
             free(node->node_list);
+    }
+
+    /* Cleaning items if it is a `subscript` AST node */
+    if (node->node_type == NT_SUBSCRIPT) {
+        if (node->subscripted_node != NULL) {
+            free_AST(node->subscripted_node);
+        }
+        if (node->subscript_expr != NULL) {
+            free_AST(node->subscript_expr);
+        }
     }
 
     free(node);

@@ -111,6 +111,8 @@ RwnObj *visit_varaccess(Interpreter *interpreter, AST *node);
 
 RwnObj *visit_varassign(Interpreter *interpreter, AST *node);
 
+RwnObj *visit_subscript(Interpreter *interpreter, AST *node);
+
 char *obj_get_repr(RwnObj *obj);
 
 char *obj_typestr(RwnObj *obj);

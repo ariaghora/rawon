@@ -136,6 +136,14 @@ AST *create_varassign_node(Token var_token, AST *node) {
     return varassign_node;
 }
 
+AST *create_subscript_node(AST *node, AST *subscript_expr) {
+    AST *subscript_node = calloc(1, sizeof(AST));
+    subscript_node->node_type = NT_SUBSCRIPT;
+    subscript_node->subscripted_node = node;
+    subscript_node->subscript_expr = subscript_expr;
+    return subscript_node;
+}
+
 AST *parser_parse(Parser *parser) {
     return parse_block(parser);
 }
@@ -282,10 +290,20 @@ AST *parse_call(Parser *parser) {
         }
 
         return create_funccall_node(at, arglist);
+    } else if (parser->current.kind == TK_LBRACKET) {
+        parser_advance(parser);
+        if (parser->current.kind == TK_RBRACKET) {
+            printf("Error: invalid syntax.\n");
+            exit(1);
+        }
+        AST *subscript_expr = parse_expr(parser);
+        expect(TK_RBRACKET, parser->current, "]");
+
+        parser_advance(parser);
+        return create_subscript_node(at, subscript_expr);
     }
 
     return at;
-
 }
 
 AST *parse_comp_expr(Parser *parser) {
