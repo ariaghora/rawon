@@ -1,4 +1,5 @@
 #include "io/console.h"
+#include "io/file.h"
 #include "strutils/strutils.h"
 #include "builtinfunc.h"
 
@@ -9,4 +10,7 @@ void init_builtin_funcs(Interpreter *context) {
 
     /* strutils */
     register_builtin_func(context, "split", rwn_split);
+
+    /* file */
+    register_builtin_func(context, "readtext", rwn_readtext);
 }

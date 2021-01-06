@@ -1,0 +1,3 @@
+s = readtext("test.txt")
+
+print(s, '\n')

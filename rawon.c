@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <libgen.h>
 
 #define STB_DS_IMPLEMENTATION
 
@@ -16,6 +18,12 @@ int main(int argc, char *argv[]) {
     Lexer *lexer = calloc(1, sizeof(Lexer));
     lexer_init(lexer, fn);
     lexer_lex(lexer);
+
+    /* change current process dir */
+    char *tmp = strdup(argv[1]);
+    char *pwd = dirname(tmp);
+    chdir(pwd);
+    free(tmp);
 
     Parser *parser = calloc(1, sizeof(Parser));
     parser_init(parser, lexer);
